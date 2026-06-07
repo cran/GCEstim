@@ -21,17 +21,19 @@ computation of the Normalized Entropy Aggregation estimate(s), to be used
 when \code{object} was created with \code{boot.B = 0}. The default is
 \code{boot.B = 100} when the \code{object} has no previous sampling
 information and \code{boot.B = object$boot.B} otherwise, which corresponds
-to the \code{boot.B} given to \code{lmgce} when the \code{object} was created.}
+to the \code{boot.B} given to \code{lmgce} when the \code{object} was
+created.}
 
 \item{boot.method}{To use with a \code{\link{lmgce}} object. Method used for
-bootstrapping. One of \code{c("residuals", "cases", "wild")} which corresponds
-to resampling on residuals, on individual cases or on residuals multiplied by
- a N(0,1) variable, respectively. The default is
+bootstrapping. One of \code{c("residuals", "cases", "wild")} which
+corresponds to resampling on residuals, on individual cases or on residuals
+multiplied by a N(0,1) variable, respectively. The default is
  \code{boot.method = object$boot.method}.}
 
 \item{error}{Loss function (error) to be used for the selection
-of the support spaces. One of c("RMSE","MSE", "MAE", "MAPE", "sMAPE", "MASE").
-The default is \code{boot.method = object$error}.}
+of the support spaces. One of
+c("RMSE","MSE", "MAE", "MAPE", "sMAPE", "MASE"). The default is
+\code{boot.method = object$error}.}
 }
 \value{
 An object of \code{\link[base]{class}} \code{neagging} is a list containing
@@ -53,15 +55,18 @@ Computes the estimates for the Normalized Entropy Aggregation
 \donttest{
 res_gce_package <-
   lmgce(y ~ .,
-        data = dataGCE,
-        boot.B = 50,
+        data = dataThesis,
+        twosteps.n = 1,
+        boot.B = 100,
         seed = 230676)
 
-neagging(res_gce_package, boot.method = "cases")
+res_neagging <- neagging(res_gce_package, boot.method = "cases")
+
+res_neagging
 
 res.tsbootgce <-
   tsbootgce(
-    formula = CO2 ~ 1 + L(GDP, 1) + L(EPC, 1) + L(EU, 1),
+    formula = CO2 ~ 1 + L(EPC, 1) + L(EUS, 2) + L(GDP, 0),
     data = moz_ts)
 
 neagging(res.tsbootgce)
@@ -71,7 +76,8 @@ neagging(res.tsbootgce)
 \references{
 da Conceição Costa, M. and Macedo, P. (2019).
 \emph{Normalized Entropy Aggregation for Inhomogeneous Large-Scale Data.}
-In O. Valenzuela, F. Rojas, H. Pomares, & I. Rojas (Eds.), Theory and Applications of Time Series Analysis (pp. 19–29).
+In O. Valenzuela, F. Rojas, H. Pomares, & I. Rojas (Eds.), Theory and
+Applications of Time Series Analysis (pp. 19–29).
 Springer International Publishing.
 \doi{10.1007/978-3-030-26036-1_2}
 }

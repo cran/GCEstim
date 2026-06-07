@@ -7,53 +7,50 @@ knitr::opts_chunk$set(
 ## ----echo=FALSE,eval=TRUE-----------------------------------------------------
 load("GCEstim_Optim.RData")
 
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
+## ----echo=TRUE,eval=TRUE,message=FALSE----------------------------------------
 library(GCEstim)
 
-## ----echo=FALSE,eval=TRUE-----------------------------------------------------
-coef.dataGCE <- c(1, 0, 0, 3, 6, 9)
+## ----echo=TRUE,eval=TRUE------------------------------------------------------
+res.lmgce.50.primal.solnp <-
+  GCEstim::lmgce(
+    y ~ .,
+    data = dataThesis,
+    support.signal = c(-50, 50),
+    twosteps.n = 0,
+    method = "primal.solnp"
+  )
 
-## ----echo=TRUE,eval=FALSE-----------------------------------------------------
-# res.lmgce.50.primal.solnp <-
-#   GCEstim::lmgce(
-#     y ~ .,
-#     data = dataGCE,
-#     support.signal = c(-50, 50),
-#     twosteps.n = 0,
-#     method = "primal.solnp"
-#   )
-# 
-# res.lmgce.50.primal.solnl <-
-#   GCEstim::lmgce(
-#     y ~ .,
-#     data = dataGCE,
-#     support.signal = c(-50, 50),
-#     twosteps.n = 0,
-#     method = "primal.solnl"
-#   )
+res.lmgce.50.primal.solnl <-
+  GCEstim::lmgce(
+    y ~ .,
+    data = dataThesis,
+    support.signal = c(-50, 50),
+    twosteps.n = 0,
+    method = "primal.solnl"
+  )
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 res.lmgce.50.primal.solnp$convergence
 res.lmgce.50.primal.solnl$convergence
 
-## ----echo=TRUE,eval=FALSE-----------------------------------------------------
-# res.lmgce.50.dual.BFGS <-
-#   GCEstim::lmgce(
-#     y ~ .,
-#     data = dataGCE,
-#     support.signal = c(-50, 50),
-#     twosteps.n = 0,
-#     method = "dual.BFGS"
-#   )
-# 
-# res.lmgce.50.dual.CG <-
-#   GCEstim::lmgce(
-#     y ~ .,
-#     data = dataGCE,
-#     support.signal = c(-50, 50),
-#     twosteps.n = 0,
-#     method = "dual.CG"
-#   )
+## ----echo=TRUE,eval=TRUE------------------------------------------------------
+res.lmgce.50.dual.BFGS <-
+  GCEstim::lmgce(
+    y ~ .,
+    data = dataThesis,
+    support.signal = c(-50, 50),
+    twosteps.n = 0,
+    method = "dual.BFGS"
+  )
+
+res.lmgce.50.dual.CG <-
+  GCEstim::lmgce(
+    y ~ .,
+    data = dataThesis,
+    support.signal = c(-50, 50),
+    twosteps.n = 0,
+    method = "dual.CG"
+  )
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 res.lmgce.50.dual.BFGS$convergence
@@ -103,7 +100,7 @@ res.lmgce.50.dual.BFGS$w
 # res.method <-
 #   lmgce(
 #     y ~ .,
-#     data = dataGCE,
+#     data = dataThesis,
 #     support.signal = c(-50,50),
 #     twosteps.n = 0,
 #     method = method.opt[i]
@@ -115,7 +112,7 @@ res.lmgce.50.dual.BFGS$w
 # compare_methods$r.squared[i] <- summary(res.method)$r.squared
 # compare_methods$error.measure[i] <- res.method$error.measure
 # compare_methods$error.measure.cv.mean[i] <- res.method$error.measure.cv.mean
-# compare_methods$beta.error[i] <- accmeasure(coef(res.method), coef.dataGCE)
+# compare_methods$beta.error[i] <- accmeasure(coef(res.method), coef.dataThesis)
 # compare_methods$nep[i] <- res.method$nep
 # compare_methods$nep.cv.mean [i] <- res.method$nep.cv.mean
 # compare_methods$convergence[i] <- res.method$convergence

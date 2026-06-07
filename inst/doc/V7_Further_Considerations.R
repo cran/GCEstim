@@ -4,35 +4,29 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----echo=FALSE,eval=TRUE-----------------------------------------------------
+## ----echo=FALSE,eval=TRUE,message=FALSE---------------------------------------
 library(GCEstim)
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 res.lmgce.100.GME <-
   GCEstim::lmgce(
     y ~ .,
-    data = dataGCE,
-    cv = TRUE,
-    cv.nfolds = 5,
+    data = dataThesis,
     support.signal = c(-100, 100),
     support.signal.points = 5,
-    twosteps.n = 0,
-    seed = 230676
+    twosteps.n = 0
   )
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 res.lmgce.100.GCE <-
   GCEstim::lmgce(
     y ~ .,
-    data = dataGCE,
-    cv = TRUE,
-    cv.nfolds = 5,
+    data = dataThesis,
     support.signal = c(-100, 100),
     support.signal.points =
       matrix(
         c(
           rep(1 / 5, 5),
-          c(0.1, 0.1, 0.6, 0.1, 0.1),
           c(0.1, 0.1, 0.6, 0.1, 0.1),
           rep(1 / 5, 5),
           rep(1 / 5, 5),
@@ -41,8 +35,7 @@ res.lmgce.100.GCE <-
         ncol = 5,
         byrow = TRUE
       ),
-    twosteps.n = 0,
-    seed = 230676
+    twosteps.n = 0
   )
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------

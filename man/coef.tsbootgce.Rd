@@ -4,7 +4,7 @@
 \alias{coef.tsbootgce}
 \title{Extract \code{\link{tsbootgce}} Model Coefficients}
 \usage{
-\method{coef}{tsbootgce}(object, which = NULL, seed = object$seed, ...)
+\method{coef}{tsbootgce}(object, which = NULL, OLS = FALSE, seed = object$seed, ...)
 }
 \arguments{
 \item{object}{Fitted \code{\link{tsbootgce}} model object.}
@@ -13,6 +13,9 @@
 defined in the argument \code{coef.method} from the \code{tsbootgce} object.
 Can be set as "mode" or "median" and the mode and median coefficients will be
 computed, respectively (see \code{\link[hdrcde]{hdr}}).}
+
+\item{OLS}{Boolean value. If \code{TRUE}, returns
+OLS estimates. The default is \code{OLS = FALSE}.}
 
 \item{seed}{A single value, interpreted as an integer, for reproducibility
 or \code{NULL} for randomness. The default is \code{seed = object$seed}.}
@@ -29,7 +32,7 @@ Extract coefficients from a \code{\link{tsbootgce}} object
 \donttest{
 res.tsbootgce <-
   tsbootgce(
-    formula = CO2 ~ 1 + L(GDP, 1) + L(EPC, 1) + L(EU, 1),
+    formula = CO2 ~ 1 + L(EPC, 1) + L(EUS, 2) + L(GDP, 0),
     data = moz_ts)
 
 coef(res.tsbootgce)

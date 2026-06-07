@@ -20,25 +20,26 @@
 #' @param end The time of the last observation, specified in the same way as
 #' \code{start} (see \code{\link[stats]{ts}}).
 #' @param coef.method Method used to estimate the coefficients. One of
-#' \code{c("mode", "median")}. for \code{"mode"} see \code{\link[hdrcde]{hdr}}
-#' @inheritParams lmgce
+#' \code{c("median", "mode")}. The default is \code{coef.method = "median"}
+#' @inheritParams dynlmgce
 #'
 #' @details
 #'
 #' The \code{tsbootgce} function fits several linear regression models via
 #' generalized cross entropy in replicas of time series obtained using
-#' \code{\link[meboot]{meboot}}. Models for \code{\link{tsbootgce}} are specified
-#' symbolically (see \code{\link[stats]{lm}} and \code{\link[dynlm]{dynlm}}).
+#' \code{\link[meboot]{meboot}}. Models for \code{\link{tsbootgce}} are
+#' specified symbolically (see \code{\link[stats]{lm}} and
+#' \code{\link[dynlm]{dynlm}}).
 #'
 #' @return
-#' \code{tsbootgce} returns an object of \code{\link[base]{class}} \code{tsbootgce}.
-#' The generic accessory functions \code{\link{coef.tsbootgce}},
-#'  \code{\link{confint.tsbootgce}} and \code{\link{plot.tsbootgce}} extract
-#'  various useful features of the value returned by \code{object} of class
-#'  \code{tsbootgce}.
+#' \code{tsbootgce} returns an object of \code{\link[base]{class}}
+#' \code{tsbootgce}. The generic accessory functions
+#' \code{\link{coef.tsbootgce}}, \code{\link{confint.tsbootgce}} and
+#' \code{\link{plot.tsbootgce}} extract various useful features of the value
+#' returned by \code{object} of class \code{tsbootgce}.
 #'
-#'  An object of \code{\link[base]{class}} \code{tsbootgce} is a list containing at
-#'  least the following components:
+#'  An object of \code{\link[base]{class}} \code{tsbootgce} is a list
+#'  containing at least the following components:
 #'
 #' \item{call}{the matched call.}
 #' \item{coefficients}{a named data frame of coefficients determined by
@@ -56,10 +57,10 @@
 #' \item{nep}{normalized entropy of the signal of the model.}
 #' \item{nepk}{normalized entropy of the signal of each coefficient.}
 #' \item{residuals}{the residuals, that is response minus fitted values.}
-#' \item{results}{a list containing the bootstrap results: "coef.matrix", a named
-#'  data frame of all the coefficients; "nepk.matrix", a named data frame of all
-#'  the normalized entropy values of each parameter; "nep.vector", a vector of
-#'  all the normalized entropy values of the model.}
+#' \item{results}{a list containing the bootstrap results: "coef.matrix", a
+#' named data frame of all the coefficients; "nepk.matrix", a named data frame
+#' of all the normalized entropy values of each parameter; "nep.vector", a
+#' vector of all the normalized entropy values of the model.}
 #' \item{seed}{the seed used.}
 #' \item{terms}{the \code{\link[stats]{terms}} object used.}
 #' \item{x}{if requested (the default), the model matrix used.}
@@ -68,8 +69,8 @@
 #' \item{y}{if requested (the default), the response used.}
 #'
 #' @seealso
-#' The generic functions \code{\link{plot.tsbootgce}}, \code{\link{print.tsbootgce}},
-#'  and \code{\link{coef.tsbootgce}}.
+#' The generic functions \code{\link{plot.tsbootgce}},
+#' \code{\link{print.tsbootgce}}, and \code{\link{coef.tsbootgce}}.
 #'
 #' @author Jorge Cabral, \email{jorgecabral@@ua.pt}
 #'
@@ -84,7 +85,8 @@
 #' \doi{10.1561/0800000004}\cr
 #'
 #' Golan, A. (2017)
-#' \emph{Foundations of Info-Metrics: Modeling, Inference, and Imperfect Information (Vol. 1).}
+#' \emph{Foundations of Info-Metrics: Modeling, Inference, and Imperfect
+#' Information (Vol. 1).}
 #' Oxford University Press.
 #' \doi{10.1093/oso/9780199349524.001.0001}\cr
 #'
@@ -107,7 +109,7 @@
 #' \donttest{
 #' res.tsbootgce <-
 #'   tsbootgce(
-#'     formula = CO2 ~ 1 + L(GDP, 1) + L(EPC, 1) + L(EU, 1),
+#'     formula = CO2 ~ 1 + L(EPC, 1) + L(EUS, 2) + L(GDP, 0),
 #'     data = moz_ts)
 #'
 #' res.tsbootgce
@@ -128,10 +130,11 @@ tsbootgce <- function(formula,
                       reps = 1000,
                       start = NULL,
                       end = NULL,
-                      coef.method = c("mode", "median"),
+                      coef.method = c("median","mode"),
                       cv = TRUE,
                       cv.nfolds = 5,
-                      errormeasure = c("RMSE", "MSE", "MAE", "MAPE", "sMAPE", "MASE"),
+                      errormeasure = c("RMSE", "MSE", "MAE",
+                                       "MAPE", "sMAPE", "MASE"),
                       errormeasure.which =
                         {
                           if (isTRUE(cv))
@@ -140,20 +143,28 @@ tsbootgce <- function(formula,
                             c("min", "elbow")
                         },
                       support.method = c("standardized", "ridge"),
-                      support.method.penalize.intercept = TRUE,
+                      support.method.ridge.lambda = NULL,
+                      support.method.ridge.lambda.min = 10^-3,
+                      support.method.ridge.lambda.max = 10^3,
+                      support.method.ridge.lambda.n = 100,
+                      support.method.ridge.standardize = TRUE,
+                      support.method.ridge.penalize.intercept = TRUE,
+                      support.method.ridge.symm = TRUE,
+                      support.method.ridge.maxresid = TRUE,
                       support.signal = NULL,
                       support.signal.vector = NULL,
                       support.signal.vector.min = 0.3,
                       support.signal.vector.max = 20,
                       support.signal.vector.n = 20,
-                      support.signal.points = c(1 / 5, 1 / 5, 1 / 5, 1 / 5, 1 / 5),
+                      support.signal.points =
+                        c(1 / 5, 1 / 5, 1 / 5, 1 / 5, 1 / 5),
                       support.noise = NULL,
                       support.noise.points = c(1 / 3, 1 / 3, 1 / 3),
                       weight = 0.5,
                       twosteps.n = 1,
                       method = c("dual.BFGS",
                                  "dual.lbfgsb3c",
-                                 "dual", "primal.solnl", "primal.solnp",
+                                 "primal.solnl", "primal.solnp",
                                  "dual.CG", "dual.L-BFGS-B",
                                  "dual.Rcgmin", "dual.bobyqa", "dual.newuoa",
                                  "dual.nlminb", "dual.nlm",
@@ -183,8 +194,9 @@ tsbootgce <- function(formula,
   boot.method <- match.arg(boot.method)
 
   Zenv <- new.env(parent = environment(formula))
-  assign("dynformula", function(x) structure(x, class = unique(c("dynformula",
-                                                                 oldClass(x)))), envir = Zenv)
+  assign("dynformula",
+         function(x) structure(x, class = unique(c("dynformula",
+                                                   oldClass(x)))), envir = Zenv)
   assign("L", function(x, k = 1) {
     if (length(k) > 1) {
       res <- lapply(k, function(i) lag(x, k = -i))
@@ -224,7 +236,8 @@ tsbootgce <- function(formula,
     stopifnot(freq >= 1 && identical(all.equal(freq, round(freq)),
                                      TRUE))
     freq <- round(freq)
-    res <- zoo::zoo(seq_along(zoo::index(x))/freq, zoo::index(x), frequency = ofreq)
+    res <- zoo::zoo(seq_along(zoo::index(x))/freq, zoo::index(x),
+                    frequency = ofreq)
     return(res)
   }, envir = Zenv)
   assign("harmon", function(x, order = 1) {
@@ -247,9 +260,14 @@ tsbootgce <- function(formula,
       res <- res[, -(2 * order)]
     return(res)
   }, envir = Zenv)
-  assign("model.frame.dynformula", function(formula, data = NULL,
-                                            subset = NULL, na.action = na.omit, drop.unused.levels = FALSE,
-                                            xlev = NULL, ...) {
+  assign("model.frame.dynformula",
+         function(formula,
+                  data = NULL,
+                  subset = NULL,
+                  na.action = na.omit,
+                  drop.unused.levels = FALSE,
+                  xlev = NULL,
+                  ...) {
     if (is.null(data)) {
       data <- as.list(parent.frame())
       data <- data[!sapply(data, inherits, "function")]
@@ -303,8 +321,9 @@ tsbootgce <- function(formula,
   mf <- eval(mf, envir = Zenv)
   mfna <- attr(mf, "na.action")
   if (length(zoo::index(mf[, 1])) > nrow(mf)) {
-    for (i in 1:NCOL(mf)) attr(mf[, i], "index") <- attr(mf[,
-                                                            i], "index")[-as.vector(mfna)]
+    for (i in 1:NCOL(mf)) {
+      attr(mf[, i], "index") <- attr(mf[, i], "index")[-as.vector(mfna)]
+    }
   }
   is.zoofactor <- function(x) !is.null(attr(x, "oclass")) &&
     attr(x, "oclass") == "factor"
@@ -337,8 +356,9 @@ tsbootgce <- function(formula,
     mf <- mf[start:end, , drop = FALSE]
     mf1 <- mf1[start:end]
     if (!is.null(mfna))
-      attr(mf, "na.action") <- structure(mfna[as.vector(mfna) >=
-                                                start & as.vector(mfna) <= end], class = class(mfna))
+      attr(mf, "na.action") <-
+      structure(mfna[as.vector(mfna) >= start & as.vector(mfna) <= end],
+                class = class(mfna))
   }
   if ("ts" %in% orig.class && zoo::is.regular(mf1, strict = TRUE)) {
     for (i in 1:ncol(mf)) if (!is.factor(mf[, i])) {
@@ -410,7 +430,15 @@ tsbootgce <- function(formula,
       errormeasure = errormeasure,
       errormeasure.which = errormeasure.which,
       support.method = support.method,
-      support.method.penalize.intercept = support.method.penalize.intercept,
+      support.method.ridge.lambda = support.method.ridge.lambda,
+      support.method.ridge.lambda.min = support.method.ridge.lambda.min,
+      support.method.ridge.lambda.max = support.method.ridge.lambda.max,
+      support.method.ridge.lambda.n = support.method.ridge.lambda.n,
+      support.method.ridge.standardize = support.method.ridge.standardize,
+      support.method.ridge.penalize.intercept =
+        support.method.ridge.penalize.intercept,
+      support.method.ridge.symm = support.method.ridge.symm,
+      support.method.ridge.maxresid = support.method.ridge.maxresid,
       support.signal = support.signal,
       support.signal.vector = support.signal.vector,
       support.signal.vector.min = support.signal.vector.min,
@@ -441,7 +469,9 @@ tsbootgce <- function(formula,
 
   for (i in 1:ncol(mf_ts)) {
     me_mf_ts[[i]] <-
-      data.frame(meboot::meboot(x = mf_ts[, i], reps = reps, trim = trim)$ensemble)
+      data.frame(meboot::meboot(x = mf_ts[, i],
+                                reps = reps,
+                                trim = trim)$ensemble)
   }
 
   coef.df <- data.frame(matrix(
@@ -449,28 +479,34 @@ tsbootgce <- function(formula,
     nrow = ncol(mf) - 1 + attr(mt, "intercept"),
     ncol = reps
   ))
-  colnames(coef.df) <- sprintf(paste0("rep_%0", floor(log10(reps)) + 1, "d"), 1:reps)
-  rownames(coef.df) <- c(ifelse(attr(mt, "intercept") == 1, "(Intercept)"), attr(mt, "term.labels"))
+  colnames(coef.df) <- sprintf(paste0("rep_%0",
+                                      floor(log10(reps)) + 1,
+                                      "d"),
+                               1:reps)
+  rownames(coef.df) <- c(ifelse(attr(mt, "intercept") == 1,
+                                "(Intercept)"),
+                         attr(mt, "term.labels"))
 
   nepk.df <- coef.OLS.df <- coef.df
 
-  coefnepk.list <- list(coef = vector(mode = "list",
-                                      length = cv.nfolds),
-                        nepk = vector(mode = "list",
-                                      length = cv.nfolds))
-
-  coef.OLS.list <- list(coef = vector(mode = "list",
-                                      length = cv.nfolds))
-
-  for (i in 1:cv.nfolds){
-    coefnepk.list$coef[[i]] <- coef.df
-    coefnepk.list$nepk[[i]] <- nepk.df
-    coef.OLS.list$coef[[i]] <- coef.df
-  }
+  # coefnepk.list <- list(coef = vector(mode = "list",
+  #                                     length = cv.nfolds),
+  #                       nepk = vector(mode = "list",
+  #                                     length = cv.nfolds))
+  #
+  # coef.OLS.list <- list(coef = vector(mode = "list",
+  #                                     length = cv.nfolds))
+  #
+  # for (i in 1:cv.nfolds){
+  #   coefnepk.list$coef[[i]] <- coef.df
+  #   coefnepk.list$nepk[[i]] <- nepk.df
+  #   coef.OLS.list$coef[[i]] <- coef.df
+  # }
 
   nep <- NULL
 
   for (i in 1:reps) {
+
     data_me_mf_ts <- data.frame(sapply(me_mf_ts, function(x){x[, i]}))
 
     res.aux.lmgce <-
@@ -487,7 +523,7 @@ tsbootgce <- function(formula,
           model = TRUE,
           x = TRUE,
           y = TRUE,
-          cv = cv,
+          cv = FALSE, #cv, # changed
           cv.nfolds = cv.nfolds,
           errormeasure = errormeasure,
           errormeasure.which =
@@ -495,27 +531,30 @@ tsbootgce <- function(formula,
                 "min"
               } else {errormeasure.which}
             },
-          support.method = "standardized",#support.method,
-          support.method.penalize.intercept = support.method.penalize.intercept,
-          support.signal =
-            #{if (is.null(support.signal)) {
-            #  res$lmgce$support.matrix
-            #  } else {
-            #    support.signal}},
-            res$lmgce$support.matrix,
+          support.method = support.method,#"standardized", # Changed
+          support.method.ridge.lambda = support.method.ridge.lambda, # Added
+          support.method.ridge.lambda.min = support.method.ridge.lambda.min, # Added
+          support.method.ridge.lambda.max = support.method.ridge.lambda.max, # Added
+          support.method.ridge.lambda.n = support.method.ridge.lambda.n, # Added
+          support.method.ridge.standardize = support.method.ridge.standardize, # Added
+          support.method.ridge.penalize.intercept =
+            support.method.ridge.penalize.intercept, # Added
+          support.method.ridge.symm = support.method.ridge.symm, # Added
+          support.method.ridge.maxresid = support.method.ridge.maxresid, # Added
+          support.signal = res$lmgce$support.matrix,
           support.signal.vector = support.signal.vector,
           support.signal.vector.min = support.signal.vector.min,
           support.signal.vector.max = support.signal.vector.max,
           support.signal.vector.n = support.signal.vector.n,
-          support.signal.points = support.signal.points,
+          support.signal.points = res$lmgce$p0, #support.signal.points, # changed
           support.noise = support.noise,
-          support.noise.points = support.noise.points,
+          support.noise.points = res$lmgce$w0,#support.noise.points, # changed
           weight = weight,
-          twosteps.n =
-            {if (is.null(support.signal)) {
-              0
-            } else {
-              twosteps.n}},
+          twosteps.n = 0,
+            # {if (is.null(support.signal)) {
+            #   0
+            # } else {
+            #   twosteps.n}}, # changed
           method = method,
           caseGLM = caseGLM,
           boot.B = 0,
@@ -531,65 +570,71 @@ tsbootgce <- function(formula,
 
     coef.OLS.df[, i] <- coef(res.aux.lmgce$results$OLS$res)
 
-    if (isTRUE(cv)) {
-    for (j in 1:cv.nfolds){
-      coefnepk.list$coef[[j]][, i] <-
-        res.aux.lmgce$results$cv$repeats1[[j]]$coefficients
-      coefnepk.list$nepk[[j]][, i] <-
-        res.aux.lmgce$results$cv$repeats1[[j]]$nepk
-      coef.OLS.list$coef[[j]][, i] <- res.aux.lmgce$results$OLS$matrix.coef[, j]
-    }
-    }
+    # if (isTRUE(cv)) {
+    # for (j in 1:cv.nfolds){
+    #   coefnepk.list$coef[[j]][, i] <-
+    #     res.aux.lmgce$results$cv$repeats1[[j]]$coefficients
+    #   coefnepk.list$nepk[[j]][, i] <-
+    #     res.aux.lmgce$results$cv$repeats1[[j]]$nepk
+    #   coef.OLS.list$coef[[j]][, i] <- res.aux.lmgce$results$OLS$matrix.coef[, j]
+    # }
+    # }
   }
 
-  if (coef.method == "mode") {
-    if (!is.null(seed))
-      set.seed(seed)
-    coef.matrix.cv <-
-      sapply(coefnepk.list$coef,
-             function(x){apply(x,
-                               1,
-                               function(x) {
-                                 hdrcde::hdr(x = as.numeric(x), prob = 95)[[2]]} )})
-    coef.OLS.matrix.cv <-
-      sapply(coef.OLS.list$coef,
-             function(x){apply(x,
-                               1,
-                               function(x) {
-                                 hdrcde::hdr(x = as.numeric(x), prob = 95)[[2]]} )})
-  } else {
-    coef.matrix.cv <-
-      sapply(coefnepk.list$coef,
-             function(x){apply(x,
-                               1,
-                               median)})
-    coef.OLS.matrix.cv <-
-      sapply(coef.OLS.list$coef,
-             function(x){apply(x,
-                               1,
-                               median)})
-  }
+  # if (coef.method == "mode") {
+  #   if (!is.null(seed))
+  #     set.seed(seed)
+  #   coef.matrix.cv <-
+  #     sapply(coefnepk.list$coef,
+  #            function(x){
+  #              apply(x,
+  #                    1,
+  #                    function(x) {
+  #                      hdrcde::hdr(x = as.numeric(x), prob = 95)[[2]]} )})
+  #   coef.OLS.matrix.cv <-
+  #     sapply(coef.OLS.list$coef,
+  #            function(x){
+  #              apply(x,
+  #                    1,
+  #                    function(x) {
+  #                      hdrcde::hdr(x = as.numeric(x), prob = 95)[[2]]} )})
+  # } else {
+  #   coef.matrix.cv <-
+  #     sapply(coefnepk.list$coef,
+  #            function(x){apply(x,
+  #                              1,
+  #                              median)})
+  #   coef.OLS.matrix.cv <-
+  #     sapply(coef.OLS.list$coef,
+  #            function(x){apply(x,
+  #                              1,
+  #                              median)})
+  # }
+  #
+  # error.cv <- NULL
+  # error.OLS.cv <- NULL
+  #
+  # if (isTRUE(cv)) {
+  # if (!is.null(seed))
+  #   set.seed(seed)
+  #
+  # auxfolds = cut(seq(1, nrow(x)),
+  #                breaks = cv.nfolds,
+  #                labels = FALSE)
+  # change_order <- sample(nrow(x))
+  #
+  # for (cv.n in 1:cv.nfolds) {
+  #   y.cv = y[change_order][auxfolds != cv.n]
+  #   X.cv = x[change_order, ][auxfolds != cv.n,]
+  #   error.cv[cv.n] <- accmeasure(y.cv,
+  #                                X.cv %*% coef.matrix.cv[, cv.n],
+  #                                errormeasure)
+  #   error.OLS.cv[cv.n] <- accmeasure(y.cv,
+  #                                    X.cv %*% coef.OLS.matrix.cv[, cv.n],
+  #                                    errormeasure)
+  # }
+  # }
 
-  if (!is.null(seed))
-    set.seed(seed)
-
-  auxfolds = cut(seq(1, nrow(x)),
-                 breaks = cv.nfolds,
-                 labels = FALSE)
-  change_order <- sample(nrow(x))
-
-  error.cv <- error.OLS.cv <- NULL
-
-  for (cv.n in 1:cv.nfolds) {
-    y.cv = y[change_order][auxfolds != cv.n]
-    X.cv = x[change_order, ][auxfolds != cv.n,]
-    error.cv[cv.n] <- accmeasure(y.cv,
-                                 X.cv %*% coef.matrix.cv[, cv.n],
-                                 errormeasure)
-    error.OLS.cv[cv.n] <- accmeasure(y.cv,
-                                     X.cv %*% coef.OLS.matrix.cv[, cv.n],
-                                     errormeasure)
-  }
   res$na.action <- attr(mf, "na.action")
   res$offset <- offset
   res$contrasts <- attr(x, "contrasts")
@@ -616,21 +661,30 @@ tsbootgce <- function(formula,
   res$results$bootstrap$coef.matrix.OLS <- coef.OLS.df
   if (coef.method == "mode") {
     if (!is.null(seed)) set.seed(seed)
-    res$coefficients <- apply(res$results$bootstrap$coef.matrix, 1, function(x) {
-      hdrcde::hdr(x = as.numeric(x), prob = 95)[[2]]
+    res$coefficients <- apply(res$results$bootstrap$coef.matrix,
+                              1,
+                              function(x) {
+                                hdrcde::hdr(x = as.numeric(x), prob = 95)[[2]]
     })
-    res$coefficients.OLS <- apply(res$results$bootstrap$coef.matrix.OLS, 1, function(x) {
-      hdrcde::hdr(x = as.numeric(x), prob = 95)[[2]]
+    res$coefficients.OLS <- apply(res$results$bootstrap$coef.matrix.OLS,
+                                  1,
+                                  function(x) {
+                                    hdrcde::hdr(x = as.numeric(x),
+                                                prob = 95)[[2]]
     })
   } else {
-    res$coefficients <- apply(res$results$bootstrap$coef.matrix, 1, median)
-    res$coefficients.OLS <- apply(res$results$bootstrap$coef.matrix.OLS, 1, median)
+    res$coefficients <-
+      apply(res$results$bootstrap$coef.matrix, 1, median)
+    res$coefficients.OLS <-
+      apply(res$results$bootstrap$coef.matrix.OLS, 1, median)
   }
-  res$coefficients.cv <- coef.matrix.cv
-  res$res.aux.lmgce <- res.aux.lmgce
+  # res$coefficients.cv <- coef.matrix.cv
+  # res$coefficients.OLS.cv <- coef.OLS.matrix.cv
+  # res$res.aux.lmgce <- res.aux.lmgce
   res$fitted.values <- model.matrix(mt, mf, contrasts) %*% res$coefficients
   res$residuals <- model.response(mf, "numeric") - res$fitted.values
-  res$fitted.values.OLS <- model.matrix(mt, mf, contrasts) %*% res$coefficients.OLS
+  res$fitted.values.OLS <-
+    model.matrix(mt, mf, contrasts) %*% res$coefficients.OLS
   res$residuals.OLS <- model.response(mf, "numeric") - res$fitted.values.OLS
   res$nep <- median(res$results$bootstrap$nep.vector)
   res$nepk <- apply(res$results$bootstrap$nepk.matrix, 1, median)
@@ -646,10 +700,10 @@ tsbootgce <- function(formula,
     accmeasure(model.response(mf, "numeric"),
                         res$fitted.values.OLS,
                         errormeasure)
-  res$error.measure.cv.mean <- mean(error.cv)
-  res$error.measure.cv.sd <- sd(error.cv)
-  res$error.measure.OLS.cv.mean <- mean(error.OLS.cv)
-  res$error.measure.OLS.cv.sd <- sd(error.OLS.cv)
+  # res$error.measure.cv.mean <- ifelse(isTRUE(cv), mean(error.cv), NULL)
+  # res$error.measure.cv.sd <- ifelse(isTRUE(cv), sd(error.cv), NULL)
+  # res$error.measure.OLS.cv.mean <- ifelse(isTRUE(cv), mean(error.OLS.cv), NULL)
+  # res$error.measure.OLS.cv.sd <- ifelse(isTRUE(cv), sd(error.OLS.cv), NULL)
   res$seed <- seed
   }
   class(res) <- "tsbootgce"

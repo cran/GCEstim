@@ -23,7 +23,7 @@
 \arguments{
 \item{x}{Fitted \code{tsbootgce} object.}
 
-\item{which}{Integers from 1 to 3. The default is \code{which = c(1,2)}.}
+\item{which}{Integers from 1 to 4. The default is \code{which = c(1,2)}.}
 
 \item{group}{Boolean value. If \code{group = TRUE}, the default, plots are
 grouped in one image.}
@@ -58,14 +58,14 @@ default is \code{lambda = 1} (see \code{\link[hdrcde]{hdr}}).}
 A \code{ggplot} object.
 }
 \description{
-Three plots (selectable by \code{which}) are currently available to
+Four plots (selectable by \code{which}) are currently available to
 evaluate a \code{\link{tsbootgce}} object.
 }
 \examples{
 \donttest{
 res.tsbootgce <-
   tsbootgce(
-    formula = CO2 ~ 1 + L(GDP, 1) + L(EPC, 1) + L(EU, 1),
+    formula = CO2 ~ 1 + L(EPC, 1) + L(EUS, 2) + L(GDP, 0),
     data = moz_ts)
 
 plot(res.tsbootgce, which = 2, group = TRUE)

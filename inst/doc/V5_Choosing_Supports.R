@@ -4,21 +4,22 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----echo=FALSE,eval=TRUE-----------------------------------------------------
+## ----echo=FALSE,eval=TRUE,message=FALSE---------------------------------------
 library(GCEstim)
 load("GCEstim_Choosing_Supports.RData")
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
-coef.dataGCE <- c(1, 0, 0, 3, 6, 9)
-
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
 res.rt.01 <- 
   ridgetrace(
-    formula = y ~ X001 + X002 + X003 + X004 + X005,
-    data = dataGCE)
+    formula = y ~ X001 + X002 + X003 + X004,
+    data = dataThesis,
+    lambda.min = 10^-3, # default
+    lambda.max = 10^3, # default
+    lambda.n = 100 # default
+  )
 
 ## ----echo=TRUE,eval=TRUE,fig.width=6,fig.height=4,fig.align='center'----------
-plot(res.rt.01, coef = coef.dataGCE)
+plot(res.rt.01, coef = coef.dataThesis)
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 res.rt.01
@@ -27,7 +28,7 @@ res.rt.01
 coef(res.rt.01, which = "max.abs")
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
-coef(res.rt.01, which = "max.abs") > abs(c(1, 0, 0, 3, 6, 9))
+coef(res.rt.01, which = "max.abs") > abs(coef.dataThesis)
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 
@@ -41,28 +42,34 @@ coef(res.rt.01, which = "max.abs") > abs(c(1, 0, 0, 3, 6, 9))
 res.lmgce.RidGME <-
   GCEstim::lmgce(
     y ~ .,
-    data = dataGCE,
+    data = dataThesis,
     support.signal = RidGME.support,
     twosteps.n = 0
   )
+coef(res.lmgce.RidGME)
 
 ## ----echo=TRUE,eval=FALSE-----------------------------------------------------
 # res.lmgce.RidGME <-
 #   GCEstim::lmgce(
 #     y ~ .,
-#     data = dataGCE,
+#     data = dataThesis,
 #     support.method = "ridge",
+#     support.method.ridge.symm = TRUE, # default
+#     support.method.ridge.maxresid = FALSE,
 #     support.signal = 1,
 #     twosteps.n = 0
 #   )
+
+## ----echo=TRUE,eval=TRUE------------------------------------------------------
+coef(res.lmgce.RidGME)
 
 ## ----echo=FALSE,eval=TRUE,results = 'asis'------------------------------------
 
 kableExtra::kable(
   cbind(res.all[, -c(5,6)],
-        c(round(GCEstim::accmeasure(fitted(res.lmgce.RidGME), dataGCE$y, which = "RMSE"), 3),
+        c(round(GCEstim::accmeasure(fitted(res.lmgce.RidGME), dataThesis$y, which = "RMSE"), 3),
           round(res.lmgce.RidGME$error.measure.cv.mean, 3),
-          round(GCEstim::accmeasure(coef(res.lmgce.RidGME), coef.dataGCE, which = "RMSE"), 3))),
+          round(GCEstim::accmeasure(coef(res.lmgce.RidGME), coef.dataThesis, which = "RMSE"), 3))),
   digits = 3,
   align = c(rep('c', times = 5)),
   col.names = c("$OLS$",
@@ -81,7 +88,9 @@ res.rt.02 <-
     data = dataincRidGME)
 
 ## ----echo=TRUE,eval=TRUE,fig.width=6,fig.height=4,fig.align='center'----------
-coef.dataincRidGME <- c(2.5, rep(0, 3), c(-8, 19, -13))
+(coef.dataincRidGME <- c(2.5, rep(0, 3), c(-8, 19, -13)))
+
+## ----echo=TRUE,eval=TRUE,fig.width=6,fig.height=4,fig.align='center'----------
 plot(res.rt.02, coef = coef.dataincRidGME)
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
@@ -94,6 +103,8 @@ res.lmgce.RidGME.02.alpha1 <-
     y ~ .,
     data = dataincRidGME,
     support.method = "ridge",
+    support.method.ridge.symm = TRUE, # default
+    support.method.ridge.maxresid = FALSE,
     support.signal = 1,
     twosteps.n = 0
   )
@@ -103,6 +114,8 @@ res.lmgce.RidGME.02.alpha2 <-
     y ~ .,
     data = dataincRidGME,
     support.method = "ridge",
+    support.method.ridge.symm = TRUE, # default
+    support.method.ridge.maxresid = FALSE,
     support.signal = 2,
     twosteps.n = 0
   )
@@ -119,23 +132,20 @@ summary(res.lmgce.RidGME.02.alpha2)$error.measure.cv.mean
 round(GCEstim::accmeasure(coef(res.lmgce.RidGME.02.alpha1), coef.dataincRidGME, which = "RMSE"), 3) 
 round(GCEstim::accmeasure(coef(res.lmgce.RidGME.02.alpha2), coef.dataincRidGME, which = "RMSE"), 3) 
 
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
-res.lmgce.RidGME.02 <-
-  GCEstim::lmgce(
-    y ~ .,
-    data = dataincRidGME,
-    support.method = "ridge",
-    twosteps.n = 0
-  )
+## ----echo=TRUE,eval=FALSE-----------------------------------------------------
+# res.lmgce.RidGME.02 <-
+#   GCEstim::lmgce(
+#     y ~ .,
+#     data = dataincRidGME,
+#     support.method = "ridge",
+#     twosteps.n = 0
+#   )
 
 ## ----echo=TRUE,eval=TRUE,fig.width=6,fig.height=4,fig.align='center'----------
-plot(res.lmgce.RidGME.02, which = 2, NormEnt = FALSE)[[1]]
+plot(res.lmgce.RidGME.02, which = 2, NormEnt = FALSE)$p2
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 summary(res.lmgce.RidGME.02)
-
-## ----echo=TRUE,eval=TRUE,fig.width=6,fig.height=4,fig.align='center'----------
-plot(res.lmgce.RidGME.02, which = 5, NormEnt = FALSE, coef = coef.dataincRidGME)[[1]]
 
 ## ----echo=TRUE,eval=FALSE-----------------------------------------------------
 # res.lmgce.RidGME.02.min <-
@@ -148,10 +158,6 @@ plot(res.lmgce.RidGME.02, which = 5, NormEnt = FALSE, coef = coef.dataincRidGME)
 #   )
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
-res.lmgce.RidGME.02.min <- 
-  changesupport(res.lmgce.RidGME.02, "min")
-
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
 summary(res.lmgce.RidGME.02.min)
 
 ## -----------------------------------------------------------------------------
@@ -159,31 +165,42 @@ round(GCEstim::accmeasure(coef(res.lmgce.RidGME.02), coef.dataincRidGME, which =
 
 round(GCEstim::accmeasure(coef(res.lmgce.RidGME.02.min), coef.dataincRidGME, which = "RMSE"), 3) 
 
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
-res.lmgce.RidGME.01.1se <-
-  GCEstim::lmgce(
-    y ~ .,
-    data = dataGCE,
-    support.method = "ridge",
-    twosteps.n = 0
-  )
+## ----echo=TRUE,eval=FALSE-----------------------------------------------------
+# res.lmgce.RidGME.01.1se <-
+#   GCEstim::lmgce(
+#     y ~ .,
+#     data = dataThesis,
+#     support.method = "ridge",
+#     twosteps.n = 0
+#   )
 
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
-res.lmgce.RidGME.01.min <- changesupport(res.lmgce.RidGME.01.1se, "min")
+## ----echo=TRUE,eval=FALSE-----------------------------------------------------
+# res.lmgce.RidGME.01.min <-
+#   GCEstim::lmgce(
+#     y ~ .,
+#     data = dataThesis,
+#     support.method = "ridge",
+#     errormeasure.which = "min",
+#     twosteps.n = 0
+#   )
+
+## ----echo=FALSE,eval=FALSE----------------------------------------------------
+# res.all.1 <-
+#   cbind(res.all[, -c(5,6)],
+#         c(round(GCEstim::accmeasure(fitted(res.lmgce.RidGME), dataThesis$y, which = "RMSE"), 3),
+#           round(res.lmgce.RidGME$error.measure.cv.mean, 3),
+#           round(GCEstim::accmeasure(coef(res.lmgce.RidGME), coef.dataThesis, which = "RMSE"), 3)),
+#         c(round(GCEstim::accmeasure(fitted(res.lmgce.RidGME.01.1se), dataThesis$y, which = "RMSE"), 3),
+#           round(res.lmgce.RidGME.01.1se$error.measure.cv.mean, 3),
+#           round(GCEstim::accmeasure(coef(res.lmgce.RidGME.01.1se), coef.dataThesis, which = "RMSE"), 3)),
+#         c(round(GCEstim::accmeasure(fitted(res.lmgce.RidGME.01.min), dataThesis$y, which = "RMSE"), 3),
+#           round(res.lmgce.RidGME.01.min$error.measure.cv.mean, 3),
+#           round(GCEstim::accmeasure(coef(res.lmgce.RidGME.01.min), coef.dataThesis, which = "RMSE"), 3)))
 
 ## ----echo=FALSE,eval=TRUE,results = 'asis'------------------------------------
 
 kableExtra::kable(
-  cbind(res.all[, -c(5,6)],
-        c(round(GCEstim::accmeasure(fitted(res.lmgce.RidGME), dataGCE$y, which = "RMSE"), 3),
-          round(res.lmgce.RidGME$error.measure.cv.mean, 3),
-          round(GCEstim::accmeasure(coef(res.lmgce.RidGME), coef.dataGCE, which = "RMSE"), 3)),
-        c(round(GCEstim::accmeasure(fitted(res.lmgce.RidGME.01.1se), dataGCE$y, which = "RMSE"), 3),
-          round(res.lmgce.RidGME.01.1se$error.measure.cv.mean, 3),
-          round(GCEstim::accmeasure(coef(res.lmgce.RidGME.01.1se), coef.dataGCE, which = "RMSE"), 3)),
-        c(round(GCEstim::accmeasure(fitted(res.lmgce.RidGME.01.min), dataGCE$y, which = "RMSE"), 3),
-          round(res.lmgce.RidGME.01.min$error.measure.cv.mean, 3),
-          round(GCEstim::accmeasure(coef(res.lmgce.RidGME.01.min), coef.dataGCE, which = "RMSE"), 3))),
+  res.all.1,
   digits = 3,
   align = c(rep('c', times = 5)),
   col.names = c("$OLS$",
@@ -197,68 +214,80 @@ kableExtra::kable(
   booktabs = FALSE)
 
 
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
-res.lmgce.1se <-
-  GCEstim::lmgce(
-    y ~ .,
-    data = dataGCE,
-    twosteps.n = 0
-  )
+## ----echo=TRUE,eval=FALSE-----------------------------------------------------
+# res.lmgce.1se <-
+#   GCEstim::lmgce(
+#     y ~ .,
+#     data = dataThesis,
+#     support.method = "standardize", # default
+#     errormeasure.which = "1se", # default
+#     twosteps.n = 0
+#   )
 
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
-res.lmgce.min <- changesupport(res.lmgce.1se, "min")
+## ----echo=TRUE,eval=FALSE-----------------------------------------------------
+# res.lmgce.min <- changesupport(res.lmgce.1se, "min")
 
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
-summary(res.lmgce.1se)
+## ----echo=FALSE,eval=FALSE----------------------------------------------------
+# res.lmgce.1se.summary <- summary(res.lmgce.1se)
+# res.lmgce.min.summary <- summary(res.lmgce.min)
 
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
-summary(res.lmgce.min)
+## ----echo=TRUE,eval=FALSE-----------------------------------------------------
+# summary(res.lmgce.1se)
 
 ## ----echo=FALSE,eval=TRUE-----------------------------------------------------
-all.data.2 <- cbind(
-  res.all[, -c(3, 4, 5, 6)],
-  c(
-    round(GCEstim::accmeasure(
-      fitted(res.lmgce.RidGME), dataGCE$y, which = "RMSE"
-    ), 3),
-    round(res.lmgce.RidGME$error.measure.cv.mean, 3),
-    round(GCEstim::accmeasure(
-      coef(res.lmgce.RidGME), coef.dataGCE, which = "RMSE"
-    ), 3)
-  ),
-  c(
-    round(GCEstim::accmeasure(
-      fitted(res.lmgce.RidGME.01.1se), dataGCE$y, which = "RMSE"
-    ), 3),
-    round(res.lmgce.RidGME.01.1se$error.measure.cv.mean, 3),
-    round(GCEstim::accmeasure(
-      coef(res.lmgce.RidGME.01.1se), coef.dataGCE, which = "RMSE"
-    ), 3)
-  ),
-  c(
-    round(GCEstim::accmeasure(
-      fitted(res.lmgce.RidGME.01.min), dataGCE$y, which = "RMSE"
-    ), 3),
-    round(res.lmgce.RidGME.01.min$error.measure.cv.mean, 3),
-    round(GCEstim::accmeasure(
-      coef(res.lmgce.RidGME.01.min), coef.dataGCE, which = "RMSE"
-    ), 3)
-  ),
-  c(
-    round(GCEstim::accmeasure(fitted(res.lmgce.1se), dataGCE$y, which = "RMSE"), 3),
-    round(res.lmgce.1se$error.measure.cv.mean, 3),
-    round(GCEstim::accmeasure(
-      coef(res.lmgce.1se), coef.dataGCE, which = "RMSE"
-    ), 3)
-  ),
-  c(
-    round(GCEstim::accmeasure(fitted(res.lmgce.min), dataGCE$y, which = "RMSE"), 3),
-    round(res.lmgce.min$error.measure.cv.mean, 3),
-    round(GCEstim::accmeasure(
-      coef(res.lmgce.min), coef.dataGCE, which = "RMSE"
-    ), 3)
-  )
-)[, -1]
+res.lmgce.1se.summary
+
+## ----echo=TRUE,eval=FALSE-----------------------------------------------------
+# summary(res.lmgce.min)
+
+## ----echo=FALSE,eval=TRUE-----------------------------------------------------
+res.lmgce.min.summary
+
+## ----echo=FALSE,eval=FALSE----------------------------------------------------
+# all.data.2 <- cbind(
+#   res.all[, -c(3, 4, 5, 6)],
+#   c(
+#     round(GCEstim::accmeasure(
+#       fitted(res.lmgce.RidGME), dataThesis$y, which = "RMSE"
+#     ), 3),
+#     round(res.lmgce.RidGME$error.measure.cv.mean, 3),
+#     round(GCEstim::accmeasure(
+#       coef(res.lmgce.RidGME), coef.dataThesis, which = "RMSE"
+#     ), 3)
+#   ),
+#   c(
+#     round(GCEstim::accmeasure(
+#       fitted(res.lmgce.RidGME.01.1se), dataThesis$y, which = "RMSE"
+#     ), 3),
+#     round(res.lmgce.RidGME.01.1se$error.measure.cv.mean, 3),
+#     round(GCEstim::accmeasure(
+#       coef(res.lmgce.RidGME.01.1se), coef.dataThesis, which = "RMSE"
+#     ), 3)
+#   ),
+#   c(
+#     round(GCEstim::accmeasure(
+#       fitted(res.lmgce.RidGME.01.min), dataThesis$y, which = "RMSE"
+#     ), 3),
+#     round(res.lmgce.RidGME.01.min$error.measure.cv.mean, 3),
+#     round(GCEstim::accmeasure(
+#       coef(res.lmgce.RidGME.01.min), coef.dataThesis, which = "RMSE"
+#     ), 3)
+#   ),
+#   c(
+#     round(GCEstim::accmeasure(fitted(res.lmgce.1se), dataThesis$y, which = "RMSE"), 3),
+#     round(res.lmgce.1se$error.measure.cv.mean, 3),
+#     round(GCEstim::accmeasure(
+#       coef(res.lmgce.1se), coef.dataThesis, which = "RMSE"
+#     ), 3)
+#   ),
+#   c(
+#     round(GCEstim::accmeasure(fitted(res.lmgce.min), dataThesis$y, which = "RMSE"), 3),
+#     round(res.lmgce.min$error.measure.cv.mean, 3),
+#     round(GCEstim::accmeasure(
+#       coef(res.lmgce.min), coef.dataThesis, which = "RMSE"
+#     ), 3)
+#   )
+# )[, -1]
 
 ## ----echo=FALSE,eval=TRUE,results = 'asis'------------------------------------
 kableExtra::kable(

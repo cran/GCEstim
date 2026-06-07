@@ -4,50 +4,79 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----echo=FALSE,eval=TRUE-----------------------------------------------------
-load("GCEstim_GME.RData")
-
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
+## ----echo=TRUE,eval=TRUE, message = FALSE-------------------------------------
 library(GCEstim)
 
-## ----echo=TRUE,eval=FALSE-----------------------------------------------------
-# coef.dataGCE <- c(1, 0, 0, 3, 6, 9)
+## ----echo=FALSE,eval=TRUE, fig.width=5,fig.height=5,fig.align='center'--------
 
-## ----echo=FALSE,eval=TRUE-----------------------------------------------------
-cor(dataGCE)
+panel.hist <- function(x, ...) {
+  usr <- par("usr")
+  on.exit(par(usr = usr))
 
-## ----echo=TRUE,eval=FALSE-----------------------------------------------------
-# res.lmgce.100000 <-
-#   GCEstim::lmgce(
-#     y ~ .,
-#     data = dataGCE,
-#     support.signal = c(-100000, 100000),
-#     support.signal.points = 5,
-#     support.noise = NULL,
-#     support.noise.points = 3,
-#     twosteps.n = 0,
-#     method = "primal.solnp"
-#   )
+  par(usr = c(usr[1:2], 0, 1.5))
+
+  h <- hist(x, plot = FALSE)
+  y <- h$counts / max(h$counts)
+
+  rect(
+    h$breaks[-length(h$breaks)], 0,
+    h$breaks[-1], y,
+    col = "lightgray",
+    border = "white"
+  )
+}
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor = 1.2, ...) {
+  usr <- par("usr")
+  on.exit(par(usr = usr))
+
+  par(usr = c(0, 1, 0, 1))
+
+  r <- cor(x, y, use = "complete.obs")
+  txt <- paste0(prefix, formatC(r, format = "f", digits = digits))
+
+  text(0.5, 0.5, txt, cex = cex.cor)
+}
+
+pairs(
+  dataThesis,
+  upper.panel = panel.cor,
+  diag.panel = panel.hist,
+  lower.panel = panel.smooth
+)
+
+## ----echo=TRUE,eval=TRUE------------------------------------------------------
+res.lmgce.100000 <-
+  GCEstim::lmgce(
+    y ~ .,
+    data = dataThesis,
+    support.signal = c(-100000, 100000),
+    support.signal.points = 5, # default
+    support.noise = NULL, # default
+    support.noise.points = 3, # default
+    twosteps.n = 0,
+    method = "primal.solnp"
+  )
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 (coef.res.lmgce.100000 <- coef(res.lmgce.100000))
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
-res.lm <- lm(y ~ ., data = dataGCE)
+res.lm <- lm(y ~ ., data = dataThesis)
 (coef.res.lm <- coef(res.lm))
 
 ## ----echo=TRUE,eval=FALSE-----------------------------------------------------
 # res.lmgce.100000 <-
 #   GCEstim::lmgce(
 #     y ~ .,
-#     data = dataGCE,
+#     data = dataThesis,
 #     support.signal = c(-100000, 100000),
-#     support.signal.points = 5,
-#     support.noise = NULL,
-#     support.noise.points = 3,
+#     support.signal.points = 5, # default
+#     support.noise = NULL, # default
+#     support.noise.points = 3, # default
 #     twosteps.n = 0,
 #     method = "primal.solnp",
-#     OLS = TRUE
+#     OLS = TRUE # default
 #   )
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
@@ -55,29 +84,29 @@ coef(res.lmgce.100000$results$OLS$res)
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 (RMSE_y.lmgce.100000 <- 
-  GCEstim::accmeasure(fitted(res.lmgce.100000), dataGCE$y, which = "RMSE"))
+  GCEstim::accmeasure(fitted(res.lmgce.100000), dataThesis$y, which = "RMSE"))
 
 # or
 # res.lmgce.100000$error.measure
 
 (RMSE_y.lm <-
-    GCEstim::accmeasure(fitted(res.lm), dataGCE$y, which = "RMSE"))
+    GCEstim::accmeasure(fitted(res.lm), dataThesis$y, which = "RMSE"))
 
 ## ----echo=TRUE,eval=FALSE-----------------------------------------------------
 # res.lmgce.100000 <-
 #   GCEstim::lmgce(
 #     y ~ .,
-#     data = dataGCE,
-#     cv = TRUE,
-#     cv.nfolds = 5,
+#     data = dataThesis,
+#     cv = TRUE, # default
+#     cv.nfolds = 5, # default
 #     support.signal = c(-100000, 100000),
-#     support.signal.points = 5,
-#     support.noise = NULL,
-#     support.noise.points = 3,
+#     support.signal.points = 5, # default
+#     support.noise = NULL, # default
+#     support.noise.points = 3, # default
 #     twosteps.n = 0,
 #     method = "primal.solnp",
-#     OLS = TRUE,
-#     seed = 230676
+#     OLS = TRUE, # default
+#     seed = 230676 # default
 #   )
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
@@ -86,136 +115,138 @@ coef(res.lmgce.100000$results$OLS$res)
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 (RMSE_beta.lmgce.100000 <-
-   GCEstim::accmeasure(coef.res.lmgce.100000, coef.dataGCE, which = "RMSE"))
+   GCEstim::accmeasure(coef.res.lmgce.100000, coef.dataThesis, which = "RMSE"))
 
 (RMSE_beta.lm <-
-    GCEstim::accmeasure(coef.res.lm, coef.dataGCE, which = "RMSE"))
+    GCEstim::accmeasure(coef.res.lm, coef.dataThesis, which = "RMSE"))
 
-## ----echo=TRUE,eval=FALSE-----------------------------------------------------
-# res.lmgce.100 <-
-#   GCEstim::lmgce(
-#     y ~ .,
-#     data = dataGCE,
-#     cv = TRUE,
-#     cv.nfolds = 5,
-#     support.signal = c(-100, 100),
-#     support.signal.points = 5,
-#     support.noise = NULL,
-#     support.noise.points = 3,
-#     twosteps.n = 0,
-#     method = "primal.solnp",
-#     OLS = TRUE,
-#     seed = 230676
-#   )
+## ----echo=TRUE,eval=TRUE------------------------------------------------------
+res.lmgce.100 <-
+  GCEstim::lmgce(
+    y ~ .,
+    data = dataThesis,
+    cv = TRUE, # default
+    cv.nfolds = 5, # default
+    support.signal = c(-100, 100),
+    support.signal.points = 5, # default
+    support.noise = NULL, # default
+    support.noise.points = 3, # default
+    twosteps.n = 0,
+    method = "primal.solnp",
+    OLS = TRUE, # default
+    seed = 230676 # default
+  )
 
 ## ----echo=FALSE,eval=TRUE-----------------------------------------------------
 coef.res.lmgce.100 <- coef(res.lmgce.100)
 
 ## ----echo=FALSE,eval=TRUE-----------------------------------------------------
 RMSE_y.lmgce.100 <-
-   GCEstim::accmeasure(fitted(res.lmgce.100), dataGCE$y, which = "RMSE")
+   GCEstim::accmeasure(fitted(res.lmgce.100), dataThesis$y, which = "RMSE")
 
 RMSE_beta.lmgce.100 <-
-    GCEstim::accmeasure(coef.res.lmgce.100, coef.dataGCE, which = "RMSE")
+    GCEstim::accmeasure(coef.res.lmgce.100, coef.dataThesis, which = "RMSE")
 
 CV_RMSE_y.lmgce.100 <- 
     res.lmgce.100$error.measure.cv.mean
 
-## ----echo=FALSE,eval=FALSE----------------------------------------------------
-# res.lmgce.50 <-
-#   GCEstim::lmgce(
-#     y ~ .,
-#     data = dataGCE,
-#     cv = TRUE,
-#     cv.nfolds = 5,
-#     support.signal = c(-50, 50),
-#     support.signal.points = 5,
-#     support.noise = NULL,
-#     support.noise.points = 3,
-#     twosteps.n = 0,
-#     method = "primal.solnp",
-#     OLS = TRUE,
-#     seed = 230676
-#   )
+## ----echo=FALSE,eval=TRUE-----------------------------------------------------
+res.lmgce.50 <-
+  GCEstim::lmgce(
+    y ~ .,
+    data = dataThesis,
+    cv = TRUE, # default
+    cv.nfolds = 5, # default
+    support.signal = c(-50, 50),
+    support.signal.points = 5, # default
+    support.noise = NULL, # default
+    support.noise.points = 3, # default
+    twosteps.n = 0,
+    method = "primal.solnp",
+    OLS = TRUE, # default
+    seed = 230676 # default
+  )
 
 ## ----echo=FALSE,eval=TRUE-----------------------------------------------------
 coef.res.lmgce.50 <- coef(res.lmgce.50)
 
 RMSE_y.lmgce.50 <-
-   GCEstim::accmeasure(fitted(res.lmgce.50), dataGCE$y, which = "RMSE")
+   GCEstim::accmeasure(fitted(res.lmgce.50), dataThesis$y, which = "RMSE")
 
 RMSE_beta.lmgce.50 <-
-    GCEstim::accmeasure(coef.res.lmgce.50, coef.dataGCE, which = "RMSE")
+    GCEstim::accmeasure(coef.res.lmgce.50, coef.dataThesis, which = "RMSE")
 
 CV_RMSE_y.lmgce.50 <- 
     res.lmgce.50$error.measure.cv.mean
 
-## ----echo=TRUE,eval=FALSE-----------------------------------------------------
-# res.lmgce.apriori.centered.zero <-
-#   GCEstim::lmgce(
-#     y ~ .,
-#     data = dataGCE,
-#     support.signal = matrix(c(-5, 5,
-#                        -2, 2,
-#                        -2, 2,
-#                        -6, 6,
-#                        -10, 10,
-#                        -10, 15),
-#                      ncol = 2,
-#                      byrow = TRUE),
-#     support.signal.points = 5,
-#     support.noise = NULL,
-#     support.noise.points = 3,
-#     twosteps.n = 0,
-#     method = "primal.solnp",
-#     OLS = TRUE,
-#     seed = 230676
-#   )
+## ----echo=TRUE,eval=TRUE------------------------------------------------------
+res.lmgce.apriori.centered.zero <-
+  GCEstim::lmgce(
+    y ~ .,
+    data = dataThesis,
+    support.signal = 
+      matrix(
+        c(-12, 12,
+          -5, 5,
+          -30, 30,
+          -26, 26,
+          -16, 16),
+        ncol = 2,
+        byrow = TRUE), 
+    support.signal.points = 5, # default
+    support.noise = NULL, # default
+    support.noise.points = 3, # default
+    twosteps.n = 0,
+    method = "primal.solnp",
+    OLS = TRUE, # default
+    seed = 230676 # default
+  )
 
 ## ----echo=FALSE,eval=TRUE-----------------------------------------------------
 coef.lmgce.apriori.centered.zero <- coef(res.lmgce.apriori.centered.zero)
 
 ## ----echo=FALSE,eval=TRUE-----------------------------------------------------
 RMSE_y.lmgce.apriori.centered.zero <-
-   GCEstim::accmeasure(fitted(res.lmgce.apriori.centered.zero), dataGCE$y, which = "RMSE")
+   GCEstim::accmeasure(fitted(res.lmgce.apriori.centered.zero), dataThesis$y, which = "RMSE")
 
 RMSE_beta.lmgce.apriori.centered.zero <-
-    GCEstim::accmeasure(coef.lmgce.apriori.centered.zero, coef.dataGCE, which = "RMSE")
+    GCEstim::accmeasure(coef.lmgce.apriori.centered.zero, coef.dataThesis, which = "RMSE")
 
 CV_RMSE_y.lmgce.apriori.centered.zero <- 
     res.lmgce.apriori.centered.zero$error.measure.cv.mean
 
-## ----echo=TRUE,eval=FALSE-----------------------------------------------------
-# res.lmgce.apriori.centered.beta <-
-#   GCEstim::lmgce(
-#     y ~ .,
-#     data = dataGCE,
-#     support.signal = matrix(c(-1, 3,
-#                        -2, 2,
-#                        -2, 2,
-#                         1, 5,
-#                         4, 8,
-#                         7, 11),
-#                      ncol = 2,
-#                      byrow = TRUE),
-#     support.signal.points = 5,
-#     support.noise = NULL,
-#     support.noise.points = 3,
-#     twosteps.n = 0,
-#     method = "primal.solnp",
-#     OLS = TRUE,
-#     seed = 230676
-#   )
+## ----echo=TRUE,eval=TRUE------------------------------------------------------
+res.lmgce.apriori.centered.beta <-
+  GCEstim::lmgce(
+    y ~ .,
+    data = dataThesis,
+    support.signal = 
+      matrix(
+        c(-6, -2,
+          -2, 2,
+          -18, -14,
+          -14, -10,
+          -7, -3),
+        ncol = 2,
+        byrow = TRUE), 
+    support.signal.points = 5,
+    support.noise = NULL,
+    support.noise.points = 3,
+    twosteps.n = 0,
+    method = "primal.solnp",
+    OLS = TRUE,
+    seed = 230676
+  )
 
 ## ----echo=FALSE,eval=TRUE-----------------------------------------------------
 coef.lmgce.apriori.centered.beta <- coef(res.lmgce.apriori.centered.beta)
 
 ## ----echo=FALSE,eval=TRUE-----------------------------------------------------
 RMSE_y.lmgce.apriori.centered.beta <-
-   GCEstim::accmeasure(fitted(res.lmgce.apriori.centered.beta), dataGCE$y, which = "RMSE")
+   GCEstim::accmeasure(fitted(res.lmgce.apriori.centered.beta), dataThesis$y, which = "RMSE")
 
 RMSE_beta.lmgce.apriori.centered.beta <-
-    GCEstim::accmeasure(coef.lmgce.apriori.centered.beta, coef.dataGCE, which = "RMSE")
+    GCEstim::accmeasure(coef.lmgce.apriori.centered.beta, coef.dataThesis, which = "RMSE")
 
 CV_RMSE_y.lmgce.apriori.centered.beta <- 
     res.lmgce.apriori.centered.beta$error.measure.cv.mean

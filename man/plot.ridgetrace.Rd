@@ -4,12 +4,18 @@
 \alias{plot.ridgetrace}
 \title{Plot Diagnostics for a \code{\link{ridgetrace}} Object}
 \usage{
-\method{plot}{ridgetrace}(x, coef = NULL, ...)
+\method{plot}{ridgetrace}(x, coef = NULL, log = TRUE, range = TRUE, ...)
 }
 \arguments{
 \item{x}{Fitted \code{\link{ridgetrace}} model object.}
 
 \item{coef}{A vector of true coefficients if available.}
+
+\item{log}{Boolean. If \code{log = TRUE}, the default, horizontal axis will
+display the logarithm of lambda.}
+
+\item{range}{Boolean. If \code{range = TRUE}, the default, minimum and
+maximum values for each coefficient will be shown.}
 
 \item{...}{additional arguments.}
 }
@@ -24,8 +30,8 @@ Jorge Cabral, \email{jorgecabral@ua.pt}
 
 res.ridgetrace <-
   ridgetrace(
-    formula = y ~ X001 + X002 + X003 + X004 + X005,
-    data = dataGCE)
+    formula = y ~ X001 + X002 + X003 + X004,
+    data = dataThesis)
 
 plot(res.ridgetrace)
 }

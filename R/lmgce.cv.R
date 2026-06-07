@@ -3,7 +3,7 @@
 #' Internal function used to fit a linear regression model via generalized cross
 #' entropy where initial support spaces can be provided or computed.
 #'
-#' @inheritParams lmgce.assign.ci
+#' @inheritParams lmgce.assign.noci
 #'
 #' @author Jorge Cabral, \email{jorgecabral@@ua.pt}
 #'
@@ -17,9 +17,12 @@ lmgce.cv <- function(y,
                      cv.nfolds = 5,
                      cv.repeats = 1,
                      errormeasure = "RMSE",
-                     max.abs.coef = NULL,
+                     min.coef = NULL,
+                     max.coef = NULL,
+                     max.abs.residual = NULL,
                      support.signal = NULL,
-                     support.signal.points = c(1 / 5, 1 / 5, 1 / 5, 1 / 5, 1 / 5),
+                     support.signal.points =
+                       c(1 / 5, 1 / 5, 1 / 5, 1 / 5, 1 / 5),
                      support.noise = NULL,
                      support.noise.points = c(1 / 3, 1 / 3, 1 / 3),
                      weight = 0.5,
@@ -47,7 +50,9 @@ lmgce.cv <- function(y,
       X.test,
       offset.test,
       errormeasure,
-      max.abs.coef,
+      min.coef,
+      max.coef,
+      max.abs.residual,
       support.signal,
       support.signal.points,
       support.noise,
@@ -83,11 +88,16 @@ lmgce.cv <- function(y,
           X.test = X[change_order, ][auxfolds == cv, ],
           offset.test[change_order][auxfolds == cv],
           errormeasure,
-          max.abs.coef,
+          min.coef,
+          max.coef,
+          max.abs.residual,
           support.signal,
           support.signal.points,
           support.noise,
-          support.noise.points,
+          {if (!is.vector(support.noise.points)) {
+            support.noise.points[change_order, ][auxfolds != cv,]} else {
+              support.noise.points
+            }},
           weight,
           method,
           caseGLM

@@ -15,7 +15,7 @@ tsbootgce(
   reps = 1000,
   start = NULL,
   end = NULL,
-  coef.method = c("mode", "median"),
+  coef.method = c("median", "mode"),
   cv = TRUE,
   cv.nfolds = 5,
   errormeasure = c("RMSE", "MSE", "MAE", "MAPE", "sMAPE", "MASE"),
@@ -26,7 +26,14 @@ tsbootgce(
     else c("min", "elbow")
  },
   support.method = c("standardized", "ridge"),
-  support.method.penalize.intercept = TRUE,
+  support.method.ridge.lambda = NULL,
+  support.method.ridge.lambda.min = 10^-3,
+  support.method.ridge.lambda.max = 10^3,
+  support.method.ridge.lambda.n = 100,
+  support.method.ridge.standardize = TRUE,
+  support.method.ridge.penalize.intercept = TRUE,
+  support.method.ridge.symm = TRUE,
+  support.method.ridge.maxresid = TRUE,
   support.signal = NULL,
   support.signal.vector = NULL,
   support.signal.vector.min = 0.3,
@@ -37,9 +44,9 @@ tsbootgce(
   support.noise.points = c(1/3, 1/3, 1/3),
   weight = 0.5,
   twosteps.n = 1,
-  method = c("dual.BFGS", "dual.lbfgsb3c", "dual", "primal.solnl", "primal.solnp",
-    "dual.CG", "dual.L-BFGS-B", "dual.Rcgmin", "dual.bobyqa", "dual.newuoa",
-    "dual.nlminb", "dual.nlm", "dual.lbfgs", "dual.optimParallel"),
+  method = c("dual.BFGS", "dual.lbfgsb3c", "primal.solnl", "primal.solnp", "dual.CG",
+    "dual.L-BFGS-B", "dual.Rcgmin", "dual.bobyqa", "dual.newuoa", "dual.nlminb",
+    "dual.nlm", "dual.lbfgs", "dual.optimParallel"),
   caseGLM = c("D", "M", "NM"),
   boot.B = 0,
   boot.method = c("residuals", "cases", "wild"),
@@ -92,7 +99,7 @@ unit (see \code{\link[stats]{ts}}).}
 \code{start} (see \code{\link[stats]{ts}}).}
 
 \item{coef.method}{Method used to estimate the coefficients. One of
-\code{c("mode", "median")}. for \code{"mode"} see \code{\link[hdrcde]{hdr}}}
+\code{c("median", "mode")}. The default is \code{coef.method = "median"}}
 
 \item{cv}{Boolean value. If \code{TRUE} the error, \code{errormeasure},
 will be computed using cross-validation. If \code{FALSE} the error will be
@@ -102,22 +109,22 @@ computed in sample. The default is \code{cv = TRUE}.}
 \code{cv = TRUE}. The default is \code{cv.nfolds = 5} and the smallest value
 allowable is \code{cv.nfolds = 3}.}
 
-\item{errormeasure}{Loss function (error) to be used for the selection
-of the support spaces. One of c("RMSE","MSE", "MAE", "MAPE", "sMAPE", "MASE").
+\item{errormeasure}{Loss function (error) to be used for the selection of
+the support spaces. One of c("RMSE","MSE", "MAE", "MAPE", "sMAPE", "MASE").
 The default is \code{errormeasure = "RMSE"}.}
 
 \item{errormeasure.which}{Which value of \code{errormeasure}
-to be used for selecting a support space upper limit from \code{support.signal.vector}.
-One of \code{c("min", "1se", "elbow")} where \code{"min"} corresponds to the
-support spaces that produced the lowest error, \code{"1se"} corresponds to
-the support spaces such that error is within 1 standard error of the CV error
-for \code{"min"} and \code{"elbow"} corresponds to the elbow point of the error
-curve (the point that maximizes the distance between each observation, i.e,
-the pair composed by the upper limit of the support space and the error, and
-the line between the first and last observations, i.e., the lowest and the
-highest upper limits of the support space respectively. See
-\code{\link[pathviewr]{find_curve_elbow}}). The default is
-\code{errormeasure.which = "1se"}.}
+to be used for selecting a support space upper limit from
+\code{support.signal.vector}. One of \code{c("min", "1se", "elbow")}
+where \code{"min"} corresponds to the support spaces that produced the lowest
+ error, \code{"1se"} corresponds to the support spaces such that error is
+ within 1 standard error of the CV error for \code{"min"} and \code{"elbow"}
+ corresponds to the elbow point of the error curve (the point that maximizes
+ the distance between each observation, i.e, the pair composed by the upper
+ limit of the support space and the error, and the line between the first and
+ last observations, i.e., the lowest and the highest upper limits of the
+ support space respectively. See \code{\link[pathviewr]{find_curve_elbow}}).
+ The default is \code{errormeasure.which = "1se"}.}
 
 \item{support.method}{One of c("standardized", "ridge"). If
 \code{support.method = "standardized}, the default, standardized coefficients
@@ -125,9 +132,53 @@ are used to define the signal support spaces. If
 \code{support.method = "ridge} the signal support spaces are define by the
 ridge trace.}
 
-\item{support.method.penalize.intercept}{Boolean value. if \code{TRUE},
-the default, the intercept will be penalized. To be used when
+\item{support.method.ridge.lambda}{Ridge parameter. The default is
+\code{support.method.ridge.lambda = NULL} and a lambda logarithmic sequence
+will be computed based on \code{support.method.ridge.lambda.n},
+\code{support.method.ridge.lambda.min} and
+\code{support.method.ridge.lambda.max}. Supplying a lambda sequence overrides
+ this. To be used when \code{support.method = "ridge"}.}
+
+\item{support.method.ridge.lambda.min}{Minimum value for the
+\code{support.method.ridge.lambda} sequence. The default is
+\code{support.method.ridge.lambda.min = 10^-3}. To be used when
+\code{support.method = "ridge"} and
+\code{support.method.ridge.lambda = NULL}.}
+
+\item{support.method.ridge.lambda.max}{Maximum value for the
+\code{support.method.ridge.lambda} sequence. The default is
+\code{support.method.ridge.lambda.max = 10^3}. To be used when
+\code{support.method = "ridge"} and
+\code{support.method.ridge.lambda = NULL}.}
+
+\item{support.method.ridge.lambda.n}{The number of ridge parameters values.
+The default is \code{support.method.ridge.lambda.n = 100}. To be used when
+ \code{support.method = "ridge"} and
+ \code{support.method.ridge.lambda = NULL}.}
+
+\item{support.method.ridge.standardize}{Boolean value. If \code{TRUE}, the
+default, then: i) centering is done by subtracting the column means of x and
+y from their corresponding columns; ii) scaling is done by dividing the
+(centered) columns of x and y by their standard deviations. To be used when
 \code{support.method = "ridge"}.}
+
+\item{support.method.ridge.penalize.intercept}{Boolean value. if \code{TRUE},
+the default, the intercept will be penalized. To be used when
+\code{support.method = "ridge"} and
+\code{support.method.ridge.standardize = FALSE}.}
+
+\item{support.method.ridge.symm}{Boolean value. If \code{TRUE}, the default,
+signal supports will be symmetrical and the upper limit will be the maximum
+ absolute values of the estimated ridge coefficients for
+ \code{support.method.ridge.lambda}. If \code{FALSE}, the lower and upper
+ limits will be, respectively, the minimum and maximum values of the
+ estimated ridge coefficients.}
+
+\item{support.method.ridge.maxresid}{Boolean value. if \code{TRUE}, the
+default, noise supports will symmetrical and the upper limit will be the
+maximum absolute value of the residuals of ridge estimation for
+ \code{support.method.ridge.lambda}. If \code{FALSE} limits are computed
+ using the empirical three-sigma rule (Pukelsheim (1994)).}
 
 \item{support.signal}{\code{NULL} or fixed positive upper limit (L) for the
 support spaces (-L,L) on standardized data (when
@@ -140,20 +191,20 @@ support spaces (-L,L) on standardized data (when
 \item{support.signal.vector}{NULL or a vector of positive values when
 \code{support.signal = NULL}. If \code{support.signal.vector = NULL},
 the default, a vector
-\code{c(support.signal.vector.min,...,support.signal.vector.max)} of dimension
- \code{support.signal.vector.n} and logarithmically equally spaced will be
-generated. Each value represents the upper limits for the standardized support
- spaces, when \code{support.method = "standardized"} or the factor to be
- multiplied by the maximum absolute value of the ridge trace for each
- coefficient, when \code{support.method = "ridge"}.}
+\code{c(support.signal.vector.min,...,support.signal.vector.max)} of
+dimension \code{support.signal.vector.n} and logarithmically equally spaced
+will be generated. Each value represents the upper limits for the
+standardized support spaces, when \code{support.method = "standardized"} or
+the factor to be multiplied by the maximum absolute value of the ridge trace
+for each coefficient, when \code{support.method = "ridge"}.}
 
 \item{support.signal.vector.min}{A positive value for the lowest limit of the
 \code{support.signal.vector} when \code{support.signal = NULL} and
 \code{support.signal.vector = NULL}. The default is
 \code{support.signal.vector.min = 0.3}.}
 
-\item{support.signal.vector.max}{A positive value for the highest limit of the
-\code{support.signal.vector} when \code{support.signal = NULL} and
+\item{support.signal.vector.max}{A positive value for the highest limit of
+the \code{support.signal.vector} when \code{support.signal = NULL} and
 \code{support.signal.vector = NULL}. The default is
 \code{support.signal.vector.max = 20}.}
 
@@ -170,7 +221,7 @@ row must be equal to 1. The default is
 \item{support.noise}{An interval, preferably centered around zero, given in
 the form \code{c(LL,UL)}. If \code{support.noise = NULL}, the default, then a
  vector \code{c(-L,L)} is computed using the empirical three-sigma rule
-Pukelsheim (1994).}
+(Pukelsheim (1994)).}
 
 \item{support.noise.points}{A positive integer, a vector or a matrix. Prior
 weights for the noise. If not a positive integer then the sum of weights by
@@ -190,7 +241,7 @@ vector of signal probabilities.}
 Programming (SQP) method; see \code{\link[NlcOptim]{solnl}}) or
 \code{"primal.solnp"} (GCE using the augmented Lagrange multiplier method
 with an SQP interior algorithm; see \code{\link[Rsolnp]{solnp}}) for primal
-form of the optimization problem and \code{"dual"} (GME), \code{"dual.CG"}
+form of the optimization problem and \code{"dual.CG"}
 (GCE using a conjugate gradients method; see \code{\link[stats]{optim}}),
 \code{"dual.BFGS"} (GCE using Broyden-Fletcher-Goldfarb-Shanno quasi-Newton
 method; see \code{\link[stats]{optim}}), \code{"dual.L-BFGS-B"} (GCE using a
@@ -225,8 +276,8 @@ is \code{boot.B = 0}.}
 
 \item{boot.method}{Method to be use for bootstrapping. One of
 \code{c("residuals", "cases", "wild")} which corresponds to resampling on
-residuals, on individual cases or on residuals multiplied by a N(0,1) variable,
-respectively. The default is \code{boot.method = "residuals"}.}
+residuals, on individual cases or on residuals multiplied by a N(0,1)
+variable, respectively. The default is \code{boot.method = "residuals"}.}
 
 \item{seed}{A single value, interpreted as an integer, for reproducibility
 or \code{NULL} for randomness. The default is \code{seed = 230676}.}
@@ -239,14 +290,14 @@ of 0 no messages or output are shown and for a value of 3 all messages
 are shown. The default is \code{verbose = 0}.}
 }
 \value{
-\code{tsbootgce} returns an object of \code{\link[base]{class}} \code{tsbootgce}.
-The generic accessory functions \code{\link{coef.tsbootgce}},
- \code{\link{confint.tsbootgce}} and \code{\link{plot.tsbootgce}} extract
- various useful features of the value returned by \code{object} of class
- \code{tsbootgce}.
+\code{tsbootgce} returns an object of \code{\link[base]{class}}
+\code{tsbootgce}. The generic accessory functions
+\code{\link{coef.tsbootgce}}, \code{\link{confint.tsbootgce}} and
+\code{\link{plot.tsbootgce}} extract various useful features of the value
+returned by \code{object} of class \code{tsbootgce}.
 
- An object of \code{\link[base]{class}} \code{tsbootgce} is a list containing at
- least the following components:
+ An object of \code{\link[base]{class}} \code{tsbootgce} is a list
+ containing at least the following components:
 
 \item{call}{the matched call.}
 \item{coefficients}{a named data frame of coefficients determined by
@@ -264,10 +315,10 @@ spaces.}
 \item{nep}{normalized entropy of the signal of the model.}
 \item{nepk}{normalized entropy of the signal of each coefficient.}
 \item{residuals}{the residuals, that is response minus fitted values.}
-\item{results}{a list containing the bootstrap results: "coef.matrix", a named
- data frame of all the coefficients; "nepk.matrix", a named data frame of all
- the normalized entropy values of each parameter; "nep.vector", a vector of
- all the normalized entropy values of the model.}
+\item{results}{a list containing the bootstrap results: "coef.matrix", a
+named data frame of all the coefficients; "nepk.matrix", a named data frame
+of all the normalized entropy values of each parameter; "nep.vector", a
+vector of all the normalized entropy values of the model.}
 \item{seed}{the seed used.}
 \item{terms}{the \code{\link[stats]{terms}} object used.}
 \item{x}{if requested (the default), the model matrix used.}
@@ -282,14 +333,15 @@ series via generalized cross entropy.
 \details{
 The \code{tsbootgce} function fits several linear regression models via
 generalized cross entropy in replicas of time series obtained using
-\code{\link[meboot]{meboot}}. Models for \code{\link{tsbootgce}} are specified
-symbolically (see \code{\link[stats]{lm}} and \code{\link[dynlm]{dynlm}}).
+\code{\link[meboot]{meboot}}. Models for \code{\link{tsbootgce}} are
+specified symbolically (see \code{\link[stats]{lm}} and
+\code{\link[dynlm]{dynlm}}).
 }
 \examples{
 \donttest{
 res.tsbootgce <-
   tsbootgce(
-    formula = CO2 ~ 1 + L(GDP, 1) + L(EPC, 1) + L(EU, 1),
+    formula = CO2 ~ 1 + L(EPC, 1) + L(EUS, 2) + L(GDP, 0),
     data = moz_ts)
 
 res.tsbootgce
@@ -307,7 +359,8 @@ Foundations and Trends® in Econometrics, 2(1–2), 1–145.
 \doi{10.1561/0800000004}\cr
 
 Golan, A. (2017)
-\emph{Foundations of Info-Metrics: Modeling, Inference, and Imperfect Information (Vol. 1).}
+\emph{Foundations of Info-Metrics: Modeling, Inference, and Imperfect
+Information (Vol. 1).}
 Oxford University Press.
 \doi{10.1093/oso/9780199349524.001.0001}\cr
 
@@ -327,8 +380,8 @@ Vinod, H. D., & Lopez-de-Lacalle, J. (2009).
 \doi{10.18637/jss.v029.i05}
 }
 \seealso{
-The generic functions \code{\link{plot.tsbootgce}}, \code{\link{print.tsbootgce}},
- and \code{\link{coef.tsbootgce}}.
+The generic functions \code{\link{plot.tsbootgce}},
+\code{\link{print.tsbootgce}}, and \code{\link{coef.tsbootgce}}.
 }
 \author{
 Jorge Cabral, \email{jorgecabral@ua.pt}

@@ -7,12 +7,12 @@
 #' @param bin.prob A vector of probabilities with length equal to \code{bin.k}.
 #' @param cont.k Number of continuous variables not used for generating y.
 #' @param y.gen.bin.k Number of binary variables used for generating y.
-#' @param y.gen.bin.beta A vector of coefficients with length equal to \code{bin.k}
-#' used to generate y.
+#' @param y.gen.bin.beta A vector of coefficients with length equal to
+#' \code{bin.k}used to generate y.
 #' @param y.gen.bin.prob A vector of probabilities with length equal
 #' to \code{y.gen.bin.k}.
-#' @param y.gen.cont.beta A vector of coefficients with length equal to \code{cont.k}
-#' used to generate y.
+#' @param y.gen.cont.beta A vector of coefficients with length equal to
+#' \code{cont.k} used to generate y.
 #' @param y.gen.cont.mod.k Experimental
 #' @param y.gen.cont.mod.beta Experimental
 #' @param y.gen.bin.mod.prob Experimental
@@ -35,8 +35,8 @@
 #'  when \code{Xgenerator} is \code{"svd"}.
 #' @param mu The mean of the variables. To be used when all variables have the
 #' same mean.
-#' @param muvect A vector of means. To be used when variables have different means.
-#' The length of \code{muvect} must be \code{k}.
+#' @param muvect A vector of means. To be used when variables have different
+#' means. The length of \code{muvect} must be \code{k}.
 #' @param sd Standard deviation of the variables. To be used when all variables
 #' have the same standard deviation.
 #' @param sdvect A vector of standard deviations. To be used when variables have
@@ -64,16 +64,18 @@
 #'
 #' @examples
 #'
-#' dataGCEstim <- fngendata(
-#'   n = 100, cont.k = 2,
-#'   y.gen.cont.beta = c(3, 6, 9),
-#'   intercept.beta = 1,
-#'   Xgenerator.method = "svd", condnumber = 50,
-#'   mu = 0, sd = 1,
-#'   error.dist = "normal", error.dist.mean = 0, error.dist.snr = 5,
-#'   dataframe = TRUE, seed = 230676)
+#' dataThesis <-
+#'   fngendata(
+#'     n = 75,
+#'     cont.k = 1,
+#'     y.gen.cont.beta = c(-16, -12, -5),
+#'     intercept.beta = -4,
+#'     Xgenerator.method = "svd", condnumber = 200,
+#'     mu = 0, sd = 1,
+#'     error.dist = "normal", error.dist.mean = 0, error.dist.snr = 5,
+#'     dataframe = TRUE, seed = 230687)
 #'
-#' summary(dataGCEstim)
+#' summary(dataThesis)
 #'
 #' @export
 #' @importFrom simstudy genCorData
@@ -88,7 +90,10 @@ fngendata <- function(n,
                       y.gen.bin.prob = NULL,
                       y.gen.cont.beta = c(2, 4, 6, 8, 10),
                       y.gen.cont.mod.k = 0,
-                      y.gen.cont.mod.beta = matrix(c(-2, 2), 1, 2, byrow = TRUE),
+                      y.gen.cont.mod.beta = matrix(c(-2, 2),
+                                                   1,
+                                                   2,
+                                                   byrow = TRUE),
                       y.gen.bin.mod.prob = c(0.5),
                       y.gen.cont.sp.k = 0,
                       y.gen.cont.sp.groups = 2,
@@ -274,7 +279,8 @@ fngendata <- function(n,
     betas.cont.sp <- coef.sp[[2]]
     betas.bin.sp <- coef.sp[[3]]
     y <-
-      y + intercept.beta.sp + betas.cont.sp * X.cont.sp + betas.bin.sp * X.bin.sp
+      y + intercept.beta.sp + betas.cont.sp * X.cont.sp +
+      betas.bin.sp * X.bin.sp
 
   } else {
     X.cont.sp <- NULL

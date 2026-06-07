@@ -17,8 +17,9 @@
 #' \donttest{
 #' res_gce_package <-
 #'   lmgce(y ~ .,
-#'         data = dataGCE,
-#'         boot.B = 50,
+#'         data = dataThesis,
+#'         twosteps.n = 1,
+#'         boot.B = 100,
 #'         seed = 230676)
 #'
 #' res_gce_package_change <- changesupport(res_gce_package, "min")
@@ -34,8 +35,8 @@
 changesupport <- function(object, support, verbose = 0)
 {
   if (is.null(object$error.which)) {
-    stop(cat('It is not possible to change the support since the lmgce object was
-             computed for a specific support'),
+    stop(cat('It is not possible to change the support since the lmgce object
+    was computed for a specific support'),
          call. = FALSE)
   }
 
@@ -96,7 +97,7 @@ changesupport <- function(object, support, verbose = 0)
         aux.object <-
           update(
             object,
-            support.method = "standardized",
+            #support.method = "standardized",
             support.signal = as.matrix(
               object$results$nocv$support.results[[newsupport]]$support.matrix),
             verbose = verbose

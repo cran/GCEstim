@@ -3,26 +3,29 @@
 #' Internal function used to fit a linear regression model via generalized cross
 #' entropy where initial support spaces can be provided or computed.
 #'
-#' @inheritParams lmgce.assign.ci
+#' @inheritParams lmgce.assign.noci
 #'
 #' @author Jorge Cabral, \email{jorgecabral@@ua.pt}
 #'
 #' @noRd
-lmgce.fit <- function(y,
-                      X,
-                      offset,
-                      y.test = NULL,
-                      X.test = NULL,
-                      offset.test = NULL,
-                      errormeasure = "RMSE",
-                      max.abs.coef = NULL,
-                      support.signal = NULL,
-                      support.signal.points = c(1 / 5, 1 / 5, 1 / 5, 1 / 5, 1 / 5),
-                      support.noise = NULL,
-                      support.noise.points = c(1 / 3, 1 / 3, 1 / 3),
-                      weight = 0.5,
-                      method = "dual.lbfgsb3c",
-                      caseGLM = "D")
+lmgce.fit <-
+  function(y,
+           X,
+           offset,
+           y.test = NULL,
+           X.test = NULL,
+           offset.test = NULL,
+           errormeasure = "RMSE",
+           min.coef = NULL,
+           max.coef = NULL,
+           max.abs.residual = NULL,
+           support.signal = NULL,
+           support.signal.points = c(1 / 5, 1 / 5, 1 / 5, 1 / 5, 1 / 5),
+           support.noise = NULL,
+           support.noise.points = c(1 / 3, 1 / 3, 1 / 3),
+           weight = 0.5,
+           method = "dual.lbfgsb3c",
+           caseGLM = "D")
 {
   X_model <- X
   y_model <- y
@@ -65,7 +68,7 @@ lmgce.fit <- function(y,
     w0 <- support.noise.points
   }
 
-  if (length(support.signal) == 1) {
+  if (length(support.signal) == 1 & is.null(max.coef)) {
     X_scaled <- X_model
     y_scaled <- y_model
     k_scaled <- k
@@ -82,65 +85,103 @@ lmgce.fit <- function(y,
   }
 
   if (length(support.signal) == 1) {
-    if (is.null(max.abs.coef)) {
-    intg <- matrix(c(-support.signal, support.signal), k_scaled, 2, byrow = TRUE)
+    if (is.null(max.coef)) {
+    zlim <- matrix(c(-support.signal, support.signal),
+                   k_scaled,
+                   2,
+                   byrow = TRUE)
 
-    intg <-
+    zlim <-
       as.matrix(data.frame(
         "LL" =
           {
             if (any(c("(Intercept)", "X.Intercept.") %in% colnames(X))) {
-              scalebackcoef(X_scaled, y_scaled, c(0, intg[, 1]), intercept = TRUE)
+              scalebackcoef(X_scaled,
+                            y_scaled,
+                            c(0, zlim[, 1]),
+                            intercept = TRUE)
             } else {
-              scalebackcoef(X_scaled, y_scaled, intg[, 1], intercept = FALSE)
+              scalebackcoef(X_scaled,
+                            y_scaled,
+                            zlim[, 1],
+                            intercept = FALSE)
             }
           },
         "UL" =
           {
             if (any(c("(Intercept)", "X.Intercept.") %in% colnames(X))) {
-              scalebackcoef(X_scaled, y_scaled, c(0, intg[, 2]), intercept = TRUE)
+              scalebackcoef(X_scaled,
+                            y_scaled,
+                            c(0, zlim[, 2]),
+                            intercept = TRUE)
             } else {
-              scalebackcoef(X_scaled, y_scaled, intg[, 2], intercept = FALSE)
+              scalebackcoef(X_scaled,
+                            y_scaled,
+                            zlim[, 2],
+                            intercept = FALSE)
             }
           }
       ))
 
     if (any(c("(Intercept)", "X.Intercept.") %in% colnames(X))) {
-      intg[1 , ] <-
-        c(-max(abs(intg[1, ])), max(abs(intg[1, ])))
+      zlim[1 , ] <-
+        c(-max(abs(zlim[1, ])), max(abs(zlim[1, ])))
     }
   } else {
-    intg <- support.signal * as.matrix(cbind(-max.abs.coef,max.abs.coef))
+    if (is.null(min.coef)) {
+      zlim <- support.signal * as.matrix(cbind(-max.coef, max.coef))
+    } else {
+      zlim <-
+        as.matrix(cbind(
+          (max.coef + min.coef) / 2 +
+            support.signal * (max.coef - min.coef) * (-0.5),
+          (max.coef + min.coef) / 2 +
+            support.signal * (max.coef - min.coef) * (0.5)))
+      }
   }
     } else if (length(support.signal) == 2) {
-    intg <- matrix(sort(support.signal), k, 2, byrow = TRUE)
+    zlim <- matrix(sort(support.signal), k, 2, byrow = TRUE)
   } else {
-    intg <- t(apply(support.signal, 1, sort))
+    zlim <- t(apply(support.signal, 1, sort))
   }
 
-  colnames(intg) <- c("SupportLL","SupportUL")
-  row.names(intg) <- colnames(X)
+  colnames(zlim) <- c("SupportLL","SupportUL")
+  row.names(zlim) <- colnames(X)
 
   if (is.null(support.noise)) {
-    int2 <- c(floor(-3 * sd(y_model)), ceiling(3 * sd(y_model)))
+    if (is.null(max.abs.residual)) {
+      vlim <- matrix(c(-3 * sd(y_model), 3 * sd(y_model)),
+                     n,
+                     2,
+                     byrow = TRUE)
+    } else {
+      vlim <- matrix(c(-max.abs.residual, max.abs.residual),
+                     n,
+                     2,
+                     byrow = TRUE)
+    }
+  } else if (length(support.noise) == 2) {
+    vlim <- matrix(sort(support.noise), n, 2, byrow = TRUE)
   } else {
-    int2 <- support.noise
+    zlim <- t(apply(support.noise, 1, sort))
   }
 
   s1 <- matrix(0, k, m)
   Z <- matrix(0, k, k * m)
   for (i in 1:k) {
-    s1[i,] <- seq(intg[i, 1],
-                  intg[i, 2],
-                  by = (intg[i, 2] - intg[i, 1]) / (m - 1))
+    s1[i,] <- seq(zlim[i, 1],
+                  zlim[i, 2],
+                  by = (zlim[i, 2] - zlim[i, 1]) / (m - 1))
     Z[i, ((i - 1) * m + 1):(i * m)] <- s1[i, 1:m]
   }
 
-  s2 <- seq(int2[1], int2[2], by = (int2[2] - int2[1]) / (j - 1))
-  S <- matrix(rep(s2, n), ncol = length(s2), byrow = TRUE)
+  s2 <- matrix(0, n, j)
   V <- matrix(0, n, n * j)
   for (i in 1:n) {
-    V[i, ((i - 1) * j + 1):(i * j)] <- s2
+    s2[i, ] <- seq(vlim[i, 1],
+                   vlim[i, 2],
+                   by = (vlim[i, 2] - vlim[i, 1]) / (j - 1))
+    V[i, ((i - 1) * j + 1):(i * j)] <- s2[i, 1:j]
   }
 
   #method.maxfeval = 1e+04
@@ -148,7 +189,7 @@ lmgce.fit <- function(y,
   method.tol = 1e-06
 
   if (method == "dual.optimParallel") {
-    cl <- parallel::makeCluster(2)     # set the number of processor cores
+    cl <- parallel::makeCluster(2)
     parallel::setDefaultCluster(cl = cl)
 
     res.opt <-
@@ -294,45 +335,38 @@ lmgce.fit <- function(y,
       p0 = as.numeric(p0),
       w0 = as.numeric(w0),
       s1 = s1,
-      S = S,
+      s2 = s2,
       weight = weight
     )
 
     aux.convergence <- res.opt$convergence
 
-    p <- res.opt$pars[1:(k * m)]
+    p <- matrix(res.opt$pars[1:(k*m)],
+                nrow = k,
+                ncol = m)
+    w <- matrix(res.opt$pars[(k*m + 1):length(res.opt$pars)],
+                nrow = n,
+                ncol = j)
 
-    aux2.p <- rep(0, k * m)
-    for (i in 1:k) {
-      aux2.p[((i - 1) * m + 1):(i * m)] <-
-        p[seq(i, i + (m - 1) * k, by = k)]
-    }
-    p <- aux2.p
+    beta_hat <- Z %*% as.numeric(t(p))
 
-    beta_hat <- Z %*% p
-
-    p <- matrix(p, ncol = m, nrow = k, byrow = TRUE)
-
-    w <- res.opt$pars[(k * m + 1):length(res.opt$pars)]
-    aux2.w <- rep(0, j * n)
-    for (i in 1:n) {
-      aux2.w[((i - 1) * j + 1):(i * j)] <-
-        w[seq(i, i + (j - 1) * n, by = n)]
-    }
-    w <- aux2.w
-    w <- matrix(w, ncol = j, nrow = n, byrow = TRUE)
+    #e_hat <- V %*% as.numeric(t(w))
 
   } else if (method == "primal.solnl") {
+
+    Aeq <-
+      rbind(cbind(as.matrix(X_model) %*% Z, V),
+            cbind(kronecker(diag(k),
+                            matrix(1, 1, m)),
+                  matrix(0, k, n * j)),
+            cbind(matrix(0, n, k * m),
+                  kronecker(diag(n),
+                            matrix(1, 1, j))))
 
     res.opt <- pracma::fmincon(
       x0 = t(c(rep(1 / m, k * m), rep(1 / j, n * j))),
       fn = ObjFunGCE.primal.solnl,
-      Aeq = rbind(
-        cbind(as.matrix(X_model) %*% Z, V),
-        cbind(kronecker(diag(k), matrix(1, 1, m)), matrix(0, k, n *
-                                                            j)),
-        cbind(matrix(0, n, k * m), kronecker(diag(n), matrix(1, 1, j)))
-      ),
+      Aeq = Aeq,
       beq = c(y_model, rep(1, n + k)),
       lb = rep(1e-5, k * m + n * j),
       ub = rep(1, k * m + n * j),
@@ -351,13 +385,13 @@ lmgce.fit <- function(y,
 
     p <- res.opt$par[1:(k * m)]
     beta_hat <- Z %*% p
-
     p <- matrix(p, ncol = m, nrow = k, byrow = TRUE)
 
     w <- res.opt$par[(k * m + 1):length(res.opt$par)]
+    #e_hat <- V %*% w
     w <- matrix(w, ncol = j, nrow = n, byrow = TRUE)
 
-  } else if (method == "dual") {
+   } else if (method == "dual") {
     dimZ <- ncol(Z)
     t <- 1
     u <- 1
@@ -368,11 +402,11 @@ lmgce.fit <- function(y,
       lambda <- lambda + increm
       newz <- exp(-t(X_model) %*% lambda %*% matrix(1, 1, dimZ) * Z)
       p_m2 <- newz / (newz %*% matrix(1, dimZ, dimZ))
-      newv <- exp(-lambda %*% matrix(1, 1, j) * S)
+      newv <- exp(-lambda %*% matrix(1, 1, j) * s2)
       w9 <- newv / (newv %*% matrix(1, j, j))
       g9 <-
         y_model - as.matrix(X_model) %*% ((Z * p_m2) %*% matrix(1, dimZ, 1)) -
-        ((S * w9) %*% matrix(1, j, 1))
+        ((s2 * w9) %*% matrix(1, j, 1))
       inv_z <-
         diag((apply((p_m2 * (
           Z ^ 2
@@ -380,9 +414,9 @@ lmgce.fit <- function(y,
           apply((p_m2 * Z), 1, sum) ^ 2) ^ (-1))
       inv_v <-
         diag((apply((w9 * (
-          S ^ 2
+          s2 ^ 2
         )), 1, sum) -
-          apply((w9 * S), 1, sum) ^ 2) ^ (-1))
+          apply((w9 * s2), 1, sum) ^ 2) ^ (-1))
       temp <- inv_v %*% as.matrix(X_model)
       inv_H = -inv_v +
         ((temp %*% solve(inv_z + t(as.matrix(
@@ -408,7 +442,7 @@ lmgce.fit <- function(y,
     p <- t(p)[,1]
 
     p <- matrix(p, ncol = m, nrow = k, byrow = TRUE)
-  }
+    }
 
   if (method %in% c("dual.optimParallel",
                     "dual.BFGS", "dual.CG", "dual.L-BFGS-B",
@@ -426,59 +460,89 @@ lmgce.fit <- function(y,
       temp <- sum(lambda_hat * X_model[, k_aux])
 
       for (m_aux in 1:m) {
-        p[k_aux, m_aux] <- p0[k_aux, m_aux] * exp(s1[k_aux, m_aux] * temp * (1 / (1 - weight)))
+        p[k_aux, m_aux] <-
+          p0[k_aux, m_aux] * exp(s1[k_aux, m_aux] * temp * (1 / (1 - weight)))
       }
 
       Omega[k_aux] <- sum(p[k_aux, ])
       p[k_aux, ] <- p[k_aux, ] / Omega[k_aux]
     }
 
-    ### CHECK ####
     p <- round(p, 8)
     p[p == 0] <- 10^-8
-    ### ###
 
     beta_hat <- matrix(apply(s1 * p, 1, sum), ncol = 1)
 
+    w <- matrix(0, n, j)
     Psi <- rep(0, n)
 
-    w <- matrix(0, n, j)
     for (n_aux in 1:n) {
       for (j_aux in 1:j) {
         w[n_aux, j_aux] <-
-          w0[n_aux, j_aux] * exp(s2[j_aux] * lambda_hat[n_aux] * (1 / weight))
+          w0[n_aux, j_aux] * exp(s2[n_aux, j_aux] * lambda_hat[n_aux] * (1 / weight))
       }
       Psi[n_aux]  <- sum(w[n_aux, ])
       w[n_aux, ] <- w[n_aux, ] / Psi[n_aux]
     }
 
-    ### CHECK ####
     w <- round(w, 8)
     w[w == 0] <- 10^-8
-    ### ###
 
-    sigma2_zeta <- rep(0, n)
-    for (n_aux in 1:n) {
-      sigma2_zeta[n_aux] <-
-        sum((s2 * s2) * w[n_aux, ]) - (sum(s2 * w[n_aux, ]))^2
-    }
+    mu_zeta <- rowSums(s2 * w)
+    sigma2_zeta <- rowSums((s2^2) * w) - mu_zeta^2
+
+    eps <- 1e-12
+    sigma2_zeta <- pmax(sigma2_zeta, eps)
+
     var_beta <-
-      ((sum(lambda_hat * lambda_hat) / n) / ((sum(1 / sigma2_zeta) / n)^2)) * solve(t(X_model) %*% X_model)
+      ((sum(lambda_hat^2) / n) / ((sum(1 / sigma2_zeta) / n)^2)) *
+      solve(t(X_model) %*% X_model)
   }
 
-  ###############################  CHECK  ######################################
-  #nep <- sum(p * log(p)) / sum(p0 * log(p0))
+  if (method %in% c("primal.solnp")){
+
+    lambda_hat <- res.opt$lagrange[1:n]
+    p <- round(p, 8)
+    p[p == 0] <- 10^-8
+    w <- round(w, 8)
+    w[w == 0] <- 10^-8
+
+    mu_zeta <- rowSums(s2 * w)
+    sigma2_zeta <- rowSums((s2^2) * w) - mu_zeta^2
+
+    eps <- 1e-12
+    sigma2_zeta <- pmax(sigma2_zeta, eps)
+
+    var_beta <-
+      ((sum(lambda_hat^2) / n) / ((sum(1 / sigma2_zeta) / n)^2)) *
+      solve(t(X_model) %*% X_model)
+  }
+
+  if (method %in% c("primal.solnl")){
+
+    lambda_hat <- as.numeric(res.opt$info$lambda$eqlin[1:n])
+
+    mu_zeta <- rowSums(s2 * w)
+
+    sigma2_zeta <- rowSums((s2^2) * w) - mu_zeta^2
+    sigma2_zeta <- pmax(sigma2_zeta, 1e-12)
+
+    sigma2_gamma_hat <- mean(lambda_hat^2)
+    xi_hat <- mean(1 / sigma2_zeta)
+
+    var_beta <- (sigma2_gamma_hat / xi_hat^2) *
+      solve(t(X_model) %*% X_model)
+  }
+
   nep <- sum(p * log(p)) / (- k * log(m))
 
   nepk <- matrix(0, k, 1)
 
   for (k_aux in 1:k) {
-    # nepk[k_aux, 1] <-
-    #     sum(p[k_aux, ] * log(p[k_aux, ])) / sum(p0[k_aux, ] * log(p0[k_aux, ]))
+
     nepk[k_aux, 1] <-
         sum(p[k_aux, ] * log(p[k_aux, ])) / (- log(m))
     }
-  ###############################  CHECK  ######################################
 
   if (is.null(y.test) || is.null(X.test)) {
     y.fitted <- as.matrix(X) %*% beta_hat
@@ -526,7 +590,7 @@ lmgce.fit <- function(y,
     vcov = var_beta,
     error.measure = accmeasure(y.fitted, y.values, which = errormeasure),
     support.stdUL ={if (length(support.signal) == 1) support.signal else NULL},
-    support.matrix = intg,
+    support.matrix = zlim,
     p = p,
     w= w,
     lambda = lambda_hat,

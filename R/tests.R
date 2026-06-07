@@ -15,8 +15,9 @@
 #' \donttest{
 #' res_gce_package <-
 #'   lmgce(y ~ .,
-#'         data = dataGCE,
-#'         boot.B = 50,
+#'         data = dataThesis,
+#'         twosteps.n = 1,
+#'         boot.B = 100,
 #'         seed = 230676)
 #' }
 #'
@@ -54,7 +55,10 @@ ER.test <- function(object)
           format.pval(pchisq(ER, 1, lower.tail = FALSE),
                       digits = dig.tst,
                       eps = eps.Pvalue),
-          format(symnum(pchisq(ER, 1, lower.tail = FALSE), corr = FALSE, na = FALSE,
+          format(symnum(pchisq(ER,
+                               1,
+                               lower.tail = FALSE),
+                        corr = FALSE, na = FALSE,
                         cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
                         symbols = c("***", "**", "*", ".", " "))))
   )

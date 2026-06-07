@@ -4,32 +4,29 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----echo=FALSE,eval=TRUE-----------------------------------------------------
+## ----echo=FALSE,eval=TRUE, message=FALSE--------------------------------------
 library(GCEstim)
 load("GCEstim_Two_Steps.RData")
-
-## ----echo=TRUE,eval=TRUE------------------------------------------------------
-coef.dataGCE <- c(1, 0, 0, 3, 6, 9)
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 res.lmgce.1se.twosteps <-
   GCEstim::lmgce(
     y ~ .,
-    data = dataGCE,
+    data = dataThesis,
     twosteps.n = 10
   )
 
 ## ----echo=TRUE,eval=TRUE, fig.width=6,fig.height=4,fig.align='center'---------
-plot(res.lmgce.1se.twosteps, which = 6)[[1]]
+plot(res.lmgce.1se.twosteps, which = 6)$p6
 
 ## ----echo=TRUE,eval=TRUE, fig.width=6,fig.height=4,fig.align='center'---------
-plot(res.lmgce.1se.twosteps, which = 7, coef = coef.dataGCE)[[1]]
+plot(res.lmgce.1se.twosteps, which = 7, coef = coef.dataThesis)$p7
 
 ## ----echo=TRUE,eval=FALSE-----------------------------------------------------
 # res.lmgce.1se.twosteps.1 <-
 #   GCEstim::lmgce(
 #     y ~ .,
-#     data = dataGCE
+#     data = dataThesis
 #   )
 
 ## ----echo=TRUE,eval=FALSE-----------------------------------------------------
@@ -39,10 +36,10 @@ plot(res.lmgce.1se.twosteps, which = 7, coef = coef.dataGCE)[[1]]
 res.lmgce.1se.twosteps.1 <- changestep(res.lmgce.1se.twosteps, 1)
 
 ## ----echo=TRUE,eval=TRUE, fig.width=6,fig.height=4,fig.align='center'---------
-plot(res.lmgce.1se.twosteps.1, which = 2)[[1]]
+plot(res.lmgce.1se.twosteps.1, which = 2)$p2
 
 ## ----echo=TRUE,eval=TRUE, fig.width=6,fig.height=4,fig.align='center'---------
-plot(res.lmgce.1se.twosteps.1, which = 3)[[1]]
+plot(res.lmgce.1se.twosteps.1, which = 3)$p3
 
 ## ----echo=TRUE,eval=TRUE------------------------------------------------------
 res.lmgce.1se.twosteps.1$p0
@@ -55,11 +52,11 @@ kableExtra::kable(
   cbind(all.data.2,
         c(
     round(GCEstim::accmeasure(
-      fitted(res.lmgce.1se.twosteps.1), dataGCE$y, which = "RMSE"
+      fitted(res.lmgce.1se.twosteps.1), dataThesis$y, which = "RMSE"
     ), 3),
     round(res.lmgce.1se.twosteps.1$error.measure.cv.mean, 3),
     round(GCEstim::accmeasure(
-      coef(res.lmgce.1se.twosteps.1), coef.dataGCE, which = "RMSE"
+      coef(res.lmgce.1se.twosteps.1), coef.dataThesis, which = "RMSE"
     ), 3)
   )),
   digits = 3,

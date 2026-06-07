@@ -24,7 +24,14 @@ lmgce(
     else c("min", "elbow")
  },
   support.method = c("standardized", "ridge"),
-  support.method.penalize.intercept = TRUE,
+  support.method.ridge.lambda = NULL,
+  support.method.ridge.lambda.min = 10^-3,
+  support.method.ridge.lambda.max = 10^3,
+  support.method.ridge.lambda.n = 100,
+  support.method.ridge.standardize = TRUE,
+  support.method.ridge.penalize.intercept = TRUE,
+  support.method.ridge.symm = TRUE,
+  support.method.ridge.maxresid = TRUE,
   support.signal = NULL,
   support.signal.vector = NULL,
   support.signal.vector.min = 0.3,
@@ -35,9 +42,9 @@ lmgce(
   support.noise.points = c(1/3, 1/3, 1/3),
   weight = 0.5,
   twosteps.n = 1,
-  method = c("dual.BFGS", "dual.lbfgsb3c", "dual", "primal.solnl", "primal.solnp",
-    "dual.CG", "dual.L-BFGS-B", "dual.Rcgmin", "dual.bobyqa", "dual.newuoa",
-    "dual.nlminb", "dual.nlm", "dual.lbfgs", "dual.optimParallel"),
+  method = c("dual.BFGS", "dual.lbfgsb3c", "primal.solnl", "primal.solnp", "dual.CG",
+    "dual.L-BFGS-B", "dual.Rcgmin", "dual.bobyqa", "dual.newuoa", "dual.nlminb",
+    "dual.nlm", "dual.lbfgs", "dual.optimParallel"),
   caseGLM = c("D", "M", "NM"),
   boot.B = 0,
   boot.method = c("residuals", "cases", "wild"),
@@ -92,22 +99,22 @@ computed in sample. The default is \code{cv = TRUE}.}
 \code{cv = TRUE}. The default is \code{cv.nfolds = 5} and the smallest value
 allowable is \code{cv.nfolds = 3}.}
 
-\item{errormeasure}{Loss function (error) to be used for the selection
-of the support spaces. One of c("RMSE","MSE", "MAE", "MAPE", "sMAPE", "MASE").
+\item{errormeasure}{Loss function (error) to be used for the selection of
+the support spaces. One of c("RMSE","MSE", "MAE", "MAPE", "sMAPE", "MASE").
 The default is \code{errormeasure = "RMSE"}.}
 
 \item{errormeasure.which}{Which value of \code{errormeasure}
-to be used for selecting a support space upper limit from \code{support.signal.vector}.
-One of \code{c("min", "1se", "elbow")} where \code{"min"} corresponds to the
-support spaces that produced the lowest error, \code{"1se"} corresponds to
-the support spaces such that error is within 1 standard error of the CV error
-for \code{"min"} and \code{"elbow"} corresponds to the elbow point of the error
-curve (the point that maximizes the distance between each observation, i.e,
-the pair composed by the upper limit of the support space and the error, and
-the line between the first and last observations, i.e., the lowest and the
-highest upper limits of the support space respectively. See
-\code{\link[pathviewr]{find_curve_elbow}}). The default is
-\code{errormeasure.which = "1se"}.}
+to be used for selecting a support space upper limit from
+\code{support.signal.vector}. One of \code{c("min", "1se", "elbow")}
+where \code{"min"} corresponds to the support spaces that produced the lowest
+ error, \code{"1se"} corresponds to the support spaces such that error is
+ within 1 standard error of the CV error for \code{"min"} and \code{"elbow"}
+ corresponds to the elbow point of the error curve (the point that maximizes
+ the distance between each observation, i.e, the pair composed by the upper
+ limit of the support space and the error, and the line between the first and
+ last observations, i.e., the lowest and the highest upper limits of the
+ support space respectively. See \code{\link[pathviewr]{find_curve_elbow}}).
+ The default is \code{errormeasure.which = "1se"}.}
 
 \item{support.method}{One of c("standardized", "ridge"). If
 \code{support.method = "standardized}, the default, standardized coefficients
@@ -115,9 +122,53 @@ are used to define the signal support spaces. If
 \code{support.method = "ridge} the signal support spaces are define by the
 ridge trace.}
 
-\item{support.method.penalize.intercept}{Boolean value. if \code{TRUE},
-the default, the intercept will be penalized. To be used when
+\item{support.method.ridge.lambda}{Ridge parameter. The default is
+\code{support.method.ridge.lambda = NULL} and a lambda logarithmic sequence
+will be computed based on \code{support.method.ridge.lambda.n},
+\code{support.method.ridge.lambda.min} and
+\code{support.method.ridge.lambda.max}. Supplying a lambda sequence overrides
+ this. To be used when \code{support.method = "ridge"}.}
+
+\item{support.method.ridge.lambda.min}{Minimum value for the
+\code{support.method.ridge.lambda} sequence. The default is
+\code{support.method.ridge.lambda.min = 10^-3}. To be used when
+\code{support.method = "ridge"} and
+\code{support.method.ridge.lambda = NULL}.}
+
+\item{support.method.ridge.lambda.max}{Maximum value for the
+\code{support.method.ridge.lambda} sequence. The default is
+\code{support.method.ridge.lambda.max = 10^3}. To be used when
+\code{support.method = "ridge"} and
+\code{support.method.ridge.lambda = NULL}.}
+
+\item{support.method.ridge.lambda.n}{The number of ridge parameters values.
+The default is \code{support.method.ridge.lambda.n = 100}. To be used when
+ \code{support.method = "ridge"} and
+ \code{support.method.ridge.lambda = NULL}.}
+
+\item{support.method.ridge.standardize}{Boolean value. If \code{TRUE}, the
+default, then: i) centering is done by subtracting the column means of x and
+y from their corresponding columns; ii) scaling is done by dividing the
+(centered) columns of x and y by their standard deviations. To be used when
 \code{support.method = "ridge"}.}
+
+\item{support.method.ridge.penalize.intercept}{Boolean value. if \code{TRUE},
+the default, the intercept will be penalized. To be used when
+\code{support.method = "ridge"} and
+\code{support.method.ridge.standardize = FALSE}.}
+
+\item{support.method.ridge.symm}{Boolean value. If \code{TRUE}, the default,
+signal supports will be symmetrical and the upper limit will be the maximum
+ absolute values of the estimated ridge coefficients for
+ \code{support.method.ridge.lambda}. If \code{FALSE}, the lower and upper
+ limits will be, respectively, the minimum and maximum values of the
+ estimated ridge coefficients.}
+
+\item{support.method.ridge.maxresid}{Boolean value. if \code{TRUE}, the
+default, noise supports will symmetrical and the upper limit will be the
+maximum absolute value of the residuals of ridge estimation for
+ \code{support.method.ridge.lambda}. If \code{FALSE} limits are computed
+ using the empirical three-sigma rule (Pukelsheim (1994)).}
 
 \item{support.signal}{\code{NULL} or fixed positive upper limit (L) for the
 support spaces (-L,L) on standardized data (when
@@ -130,20 +181,20 @@ support spaces (-L,L) on standardized data (when
 \item{support.signal.vector}{NULL or a vector of positive values when
 \code{support.signal = NULL}. If \code{support.signal.vector = NULL},
 the default, a vector
-\code{c(support.signal.vector.min,...,support.signal.vector.max)} of dimension
- \code{support.signal.vector.n} and logarithmically equally spaced will be
-generated. Each value represents the upper limits for the standardized support
- spaces, when \code{support.method = "standardized"} or the factor to be
- multiplied by the maximum absolute value of the ridge trace for each
- coefficient, when \code{support.method = "ridge"}.}
+\code{c(support.signal.vector.min,...,support.signal.vector.max)} of
+dimension \code{support.signal.vector.n} and logarithmically equally spaced
+will be generated. Each value represents the upper limits for the
+standardized support spaces, when \code{support.method = "standardized"} or
+the factor to be multiplied by the maximum absolute value of the ridge trace
+for each coefficient, when \code{support.method = "ridge"}.}
 
 \item{support.signal.vector.min}{A positive value for the lowest limit of the
 \code{support.signal.vector} when \code{support.signal = NULL} and
 \code{support.signal.vector = NULL}. The default is
 \code{support.signal.vector.min = 0.3}.}
 
-\item{support.signal.vector.max}{A positive value for the highest limit of the
-\code{support.signal.vector} when \code{support.signal = NULL} and
+\item{support.signal.vector.max}{A positive value for the highest limit of
+the \code{support.signal.vector} when \code{support.signal = NULL} and
 \code{support.signal.vector = NULL}. The default is
 \code{support.signal.vector.max = 20}.}
 
@@ -160,7 +211,7 @@ row must be equal to 1. The default is
 \item{support.noise}{An interval, preferably centered around zero, given in
 the form \code{c(LL,UL)}. If \code{support.noise = NULL}, the default, then a
  vector \code{c(-L,L)} is computed using the empirical three-sigma rule
-Pukelsheim (1994).}
+(Pukelsheim (1994)).}
 
 \item{support.noise.points}{A positive integer, a vector or a matrix. Prior
 weights for the noise. If not a positive integer then the sum of weights by
@@ -180,7 +231,7 @@ vector of signal probabilities.}
 Programming (SQP) method; see \code{\link[NlcOptim]{solnl}}) or
 \code{"primal.solnp"} (GCE using the augmented Lagrange multiplier method
 with an SQP interior algorithm; see \code{\link[Rsolnp]{solnp}}) for primal
-form of the optimization problem and \code{"dual"} (GME), \code{"dual.CG"}
+form of the optimization problem and \code{"dual.CG"}
 (GCE using a conjugate gradients method; see \code{\link[stats]{optim}}),
 \code{"dual.BFGS"} (GCE using Broyden-Fletcher-Goldfarb-Shanno quasi-Newton
 method; see \code{\link[stats]{optim}}), \code{"dual.L-BFGS-B"} (GCE using a
@@ -215,8 +266,8 @@ is \code{boot.B = 0}.}
 
 \item{boot.method}{Method to be use for bootstrapping. One of
 \code{c("residuals", "cases", "wild")} which corresponds to resampling on
-residuals, on individual cases or on residuals multiplied by a N(0,1) variable,
-respectively. The default is \code{boot.method = "residuals"}.}
+residuals, on individual cases or on residuals multiplied by a N(0,1)
+variable, respectively. The default is \code{boot.method = "residuals"}.}
 
 \item{seed}{A single value, interpreted as an integer, for reproducibility
 or \code{NULL} for randomness. The default is \code{seed = 230676}.}
@@ -275,7 +326,8 @@ for the selected support space.}
 factor that produced the error within one standard error from the minimum
 error.}
 \item{support.signal.elbow}{upper limit of the standardized support space or
-factor that produced the error correspondent to the elbow of the error curve.}
+factor that produced the error correspondent to the elbow of the error
+curve.}
 \item{support.signal.min}{upper limit of the standardized support space or
 factor that produced the minimum error.}
 \item{p0}{vector of prior weights used for the signal.}
@@ -305,11 +357,12 @@ original data.}
 \item{support.method}{method chosen for the support's limits}
 \item{support.ok}{vector of successful positive upper limits for the
 support spaces on standardized data (\code{support.method = "standardized"})
-or factors (\code{support.method = "ridge"}), when \code{support.signal = NULL}
- or \code{support.signal = L}, or \code{"interval"} otherwise.}
+or factors (\code{support.method = "ridge"}), when
+\code{support.signal = NULL} or \code{support.signal = L}, or
+\code{"interval"} otherwise.}
 \item{support.stdUL}{when applicable, the upper limit of the standardized
-support chosen, when \code{support.method = "standardized"} or the factor used
- when \code{support.method = "ridge"}.}
+support chosen, when \code{support.method = "standardized"} or the factor
+used when \code{support.method = "ridge"}.}
 \item{vcov}{variance-covariance matrix of the coefficients.}
 }
 \description{
@@ -318,9 +371,10 @@ entropy. Initial support spaces can be provided or computed.
 }
 \details{
 The \code{lmgce} function fits a linear regression model via generalized cross
-entropy. Models for \code{lmgce} are specified symbolically. A typical model has the
-form response ~ terms where response is the (numeric) response vector and
-terms is a series of terms which specifies a linear predictor for response.
+entropy. Models for \code{lmgce} are specified symbolically. A typical model
+has the form response ~ terms where response is the (numeric) response vector
+and terms is a series of terms which specifies a linear predictor for
+response.
  \code{lmgce} calls the lower level functions \code{lmgce.validate},
  \code{lmgce.assign.ci}, \code{lmgce.assign.noci}, \code{lmgce.sscv},
  \code{lmgce.ss}, \code{lmgce.cv} and \code{lmgce.fit}.
@@ -329,8 +383,9 @@ terms is a series of terms which specifies a linear predictor for response.
 \donttest{
 res_gce_package <-
   lmgce(y ~ .,
-        data = dataGCE,
-        boot.B = 50,
+        data = dataThesis,
+        twosteps.n = 1,
+        boot.B = 100,
         seed = 230676)
 }
 
@@ -346,7 +401,8 @@ Golan, A. (2008).
 Foundations and Trends® in Econometrics, 2(1–2), 1–145.
 \doi{10.1561/0800000004}\cr
 Golan, A. (2017)
-\emph{Foundations of Info-Metrics: Modeling, Inference, and Imperfect Information (Vol. 1).}
+\emph{Foundations of Info-Metrics: Modeling, Inference, and Imperfect
+Information (Vol. 1).}
 Oxford University Press.
 \doi{10.1093/oso/9780199349524.001.0001}\cr
 Pukelsheim, F. (1994)
@@ -356,7 +412,8 @@ The American Statistician, 48(2), 88–91.
 Macedo, P., Cabral, J., Afreixo, V., Macedo, F., Angelelli, M. (2025)
 \emph{RidGME estimation and inference in ill-conditioned models.}
 In: Gervasi O, Murgante B, Garau C, et al., eds. Computational Science and
-Its Applications – ICCSA 2025 Workshops. Springer Nature Switzerland; 2025:300-313.
+Its Applications – ICCSA 2025 Workshops. Springer Nature Switzerland;
+2025:300-313.
 \doi{10.1007/978-3-031-97589-9_21}
 }
 \seealso{

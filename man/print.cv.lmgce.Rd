@@ -19,16 +19,6 @@ A small summary of a \code{cv.lmgce} object is returned.
 \description{
 Print \code{\link{cv.lmgce}} object
 }
-\examples{
-\donttest{
-res.cv.lmgce <-
-  cv.lmgce(y ~ .,
-           data = dataGCE)
-
-res.cv.lmgce
-}
-
-}
 \author{
 Jorge Cabral, \email{jorgecabral@ua.pt}
 }

@@ -50,14 +50,14 @@ fngendata(
 
 \item{y.gen.bin.k}{Number of binary variables used for generating y.}
 
-\item{y.gen.bin.beta}{A vector of coefficients with length equal to \code{bin.k}
-used to generate y.}
+\item{y.gen.bin.beta}{A vector of coefficients with length equal to
+\code{bin.k}used to generate y.}
 
 \item{y.gen.bin.prob}{A vector of probabilities with length equal
 to \code{y.gen.bin.k}.}
 
-\item{y.gen.cont.beta}{A vector of coefficients with length equal to \code{cont.k}
-used to generate y.}
+\item{y.gen.cont.beta}{A vector of coefficients with length equal to
+\code{cont.k} used to generate y.}
 
 \item{y.gen.cont.mod.k}{Experimental}
 
@@ -95,8 +95,8 @@ when \code{Xgenerator} is \code{"svd"}.}
 \item{mu}{The mean of the variables. To be used when all variables have the
 same mean.}
 
-\item{muvect}{A vector of means. To be used when variables have different means.
-The length of \code{muvect} must be \code{k}.}
+\item{muvect}{A vector of means. To be used when variables have different
+means. The length of \code{muvect} must be \code{k}.}
 
 \item{sd}{Standard deviation of the variables. To be used when all variables
 have the same standard deviation.}
@@ -135,16 +135,18 @@ Generates data
 }
 \examples{
 
-dataGCEstim <- fngendata(
-  n = 100, cont.k = 2,
-  y.gen.cont.beta = c(3, 6, 9),
-  intercept.beta = 1,
-  Xgenerator.method = "svd", condnumber = 50,
-  mu = 0, sd = 1,
-  error.dist = "normal", error.dist.mean = 0, error.dist.snr = 5,
-  dataframe = TRUE, seed = 230676)
+dataThesis <-
+  fngendata(
+    n = 75,
+    cont.k = 1,
+    y.gen.cont.beta = c(-16, -12, -5),
+    intercept.beta = -4,
+    Xgenerator.method = "svd", condnumber = 200,
+    mu = 0, sd = 1,
+    error.dist = "normal", error.dist.mean = 0, error.dist.snr = 5,
+    dataframe = TRUE, seed = 230687)
 
-summary(dataGCEstim)
+summary(dataThesis)
 
 }
 \author{

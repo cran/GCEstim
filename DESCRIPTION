@@ -2,8 +2,8 @@ Package: GCEstim
 Type: Package
 Title: Regression Coefficients Estimation Using the Generalized Cross
         Entropy
-Version: 0.1.0
-Date: 2025-07-04
+Version: 1.1.0
+Date: 2026-06-07
 Authors@R: c(
     person("Cabral", "Jorge", email = "jorgecabral@ua.pt", role = c("aut", "cre"),
           comment = c(ORCID = "0000-0001-5721-4550")),
@@ -14,24 +14,24 @@ Description: Estimation and inference using the Generalized Maximum Entropy (GME
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.2
 Depends: R (>= 3.5.0), zoo
 Imports: downlit, data.table, rlang, lbfgs, lbfgsb3c, meboot,
         optimParallel, optimx, rstudioapi, stats, clusterGeneration,
         simstudy, pracma, pathviewr, Rsolnp, bayestestR, ggplot2,
         ggpubr, ggdist, latex2exp, plotly, viridis, hdrcde, shiny,
         miniUI, shinyWidgets, shinydashboardPlus, readxl, DT, magrittr
-Suggests: knitr, rmarkdown, kableExtra
+Suggests: knitr, rmarkdown, kableExtra, NlcOptim
 VignetteBuilder: knitr
 URL: https://github.com/jorgevazcabral/GCEstim
 BugReports: https://github.com/jorgevazcabral/GCEstim/issues
 Config/spelling: wordlist: inst/WORDLIST
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2025-07-13 08:11:23 UTC; jorge
+Packaged: 2026-06-07 10:06:45 UTC; jorge
 Author: Cabral Jorge [aut, cre] (ORCID:
     <https://orcid.org/0000-0001-5721-4550>),
   Macedo Pedro [ths],
   Afreixo Vera [ths]
 Maintainer: Cabral Jorge <jorgecabral@ua.pt>
 Repository: CRAN
-Date/Publication: 2025-07-16 17:00:02 UTC
+Date/Publication: 2026-06-07 10:40:02 UTC

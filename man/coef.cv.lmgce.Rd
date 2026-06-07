@@ -14,20 +14,11 @@
 \value{
 Returns the coefficients from a \code{\link{cv.lmgce}} object. The
 coefficients are obtained from the \code{\link{lmgce}} object with best
-performance. These coefficients are stored in \code{object$best$coefficients}.
+performance. These coefficients are stored in
+\code{object$best$coefficients}.
 }
 \description{
 Extract coefficients from a \code{\link{cv.lmgce}} object
-}
-\examples{
-\donttest{
-res.cv.lmgce <-
-  cv.lmgce(y ~ .,
-           data = dataGCE)
-
-coef(res.cv.lmgce)
-}
-
 }
 \author{
 Jorge Cabral, \email{jorgecabral@ua.pt}

@@ -12,22 +12,13 @@
 #'
 #' @author Jorge Cabral, \email{jorgecabral@@ua.pt}
 #'
-#' @examples
-#' \donttest{
-#' res.cv.lmgce <-
-#'   cv.lmgce(y ~ .,
-#'            data = dataGCE)
-#'
-#' res.cv.lmgce
-#' }
-#'
 #' @method print cv.lmgce
 #' @export
 
 print.cv.lmgce <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 {
   cat("\nCall:\n",
-      paste(deparse(x$best$call), sep = "\n", collapse = "\n"),
+      paste(deparse(x$call), sep = "\n", collapse = "\n"),
       "\n\n",
       sep = "")
 
@@ -64,18 +55,10 @@ print.cv.lmgce <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 #'
 #' @return Returns the coefficients from a \code{\link{cv.lmgce}} object. The
 #' coefficients are obtained from the \code{\link{lmgce}} object with best
-#' performance. These coefficients are stored in \code{object$best$coefficients}.
+#' performance. These coefficients are stored in
+#' \code{object$best$coefficients}.
 #'
 #' @author Jorge Cabral, \email{jorgecabral@@ua.pt}
-#'
-#' @examples
-#' \donttest{
-#' res.cv.lmgce <-
-#'   cv.lmgce(y ~ .,
-#'            data = dataGCE)
-#'
-#' coef(res.cv.lmgce)
-#' }
 #'
 #' @method coef cv.lmgce
 #' @importFrom stats coef
@@ -95,19 +78,12 @@ coef.cv.lmgce <- function(object, ...)
 #'
 #' @return Returns the coefficients from a \code{\link{cv.lmgce}} object. The
 #' coefficients are obtained from the \code{\link{lmgce}} object with best
-#' performance. These coefficients are stored in \code{object$best$coefficients}.
+#' performance. These coefficients are stored in
+#' \code{object$best$coefficients}.
 #'
 #' @author Jorge Cabral, \email{jorgecabral@@ua.pt}
 #'
 #' @rdname coefficients.cv.lmgce
-#' @examples
-#' \donttest{
-#' res.cv.lmgce <-
-#'   cv.lmgce(y ~ .,
-#'            data = dataGCE)
-#'
-#' coefficients(res.cv.lmgce)
-#' }
 #'
 #' @method coefficients cv.lmgce
 #' @importFrom stats coefficients
@@ -117,32 +93,24 @@ coefficients.cv.lmgce <- coef.cv.lmgce
 
 #' Plot Diagnostics for a \code{\link{cv.lmgce}} Object
 #'
-#' One plot (selectable by \code{which}) is currently available to
-#' evaluate a \code{\link{cv.lmgce}} object. The plot depicts the error change
-#' with the combination of different arguments of \code{\link{cv.lmgce}}.
+#' Two plots (selectable by \code{which}) are currently available to
+#' evaluate a \code{\link{cv.lmgce}} object. The plots depicts the error change
+#' with the combination of different arguments of \code{\link{cv.lmgce}} and
+#' also the best combination.
 #'
 #' @param x Fitted \code{cv.lmgce} model object.
-#' @param which A subset of the numbers 1:1.
+#' @param which A subset of the numbers 1:2.
 #' @param ncol Number of columns of the plot (see
-#' \code{\link[ggplot2]{facet_wrap}}).
+#' \code{\link[ggplot2]{facet_wrap}}); to use when \code{which=1}.
 #' @param scales One of c("free", "fixed") (see
-#' \code{\link[ggplot2]{facet_wrap}}).
+#' \code{\link[ggplot2]{facet_wrap}}); to use when \code{which=1}.
 #' @param ... additional arguments.
 #'
-#' @return A \code{ggplot} object.
+#' @return A list of \code{ggplot} objects.
 #'
 #' @author Jorge Cabral, \email{jorgecabral@@ua.pt}
 #'
 #' @seealso \code{\link[GCEstim]{cv.lmgce}}
-#'
-#' @examples
-#' \donttest{
-#' res.cv.lmgce <-
-#'   cv.lmgce(y ~ .,
-#'            data = dataGCE)
-#'
-#' plot(res.cv.lmgce)
-#' }
 #'
 #' @method plot cv.lmgce
 #' @importFrom rlang .data
@@ -150,22 +118,27 @@ coefficients.cv.lmgce <- coef.cv.lmgce
 
 plot.cv.lmgce <-
   function (x,
-            which = 1,
+            which = c(1, 2),
             ncol = 1,
             scales = "free",
             ...) {
     if (!inherits(x, "cv.lmgce"))
       stop("use only with \"cv.lmgce\" objects")
 
-    show <- rep(FALSE, 1)
+    show <- rep(FALSE, 2)
     show[which] <- TRUE
 
+    plots <- list(p1 = NULL,
+                  p2 = NULL)
+
     if (show[1L]) {
-    ggplot2::ggplot(x$results,
+      plots$p1 <-
+      ggplot2::ggplot(x$results,
                     ggplot2::aes(x = .data$support.signal.points,
                                  y = .data$error.measure.cv.mean,
                                  group = as.factor(.data$support.noise.points),
-                                 colour = as.factor(.data$support.noise.points))) +
+                                 colour = as.factor(.data$support.noise.points))
+                    ) +
       ggplot2::geom_line() +
       ggplot2::facet_wrap(~weight, ncol = ncol, scales = scales) +
       ggplot2::theme(legend.position = "bottom") +
@@ -173,7 +146,14 @@ plot.cv.lmgce <-
       ggplot2::ylab(paste0("CV-", x$best$error)) +
       ggplot2::guides(
         colour =
-          ggplot2::guide_legend(title = "Number of points of the noise support"))
+          ggplot2::guide_legend(title = "Number of points of the noise support")
+        )
 
     }
+
+    if (show[2L]) {
+      plots$p2 <- plot(x$best)
+    }
+
+    plots[!sapply(plots, is.null)]
   }

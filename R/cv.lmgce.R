@@ -38,28 +38,66 @@
 #' \code{cv = TRUE}. The default is \code{cv.nfolds = 5} and the smallest value
 #' allowable is \code{cv.nfolds = 3}.
 #' @param errormeasure Loss function (error) to be used for the selection
-#' of the support spaces. One of c("RMSE","MSE", "MAE", "MAPE", "sMAPE", "MASE").
-#' The default is \code{errormeasure = "RMSE"}.
+#' of the support spaces. One of
+#' c("RMSE","MSE", "MAE", "MAPE", "sMAPE", "MASE"). The default is
+#' \code{errormeasure = "RMSE"}.
 #' @param errormeasure.which Which value of \code{errormeasure}
-#' to be used for selecting a support space upper limit from \code{support.signal.vector}.
-#' One of \code{c("min", "1se", "elbow")} where \code{"min"} corresponds to the
-#' support spaces that produced the lowest error, \code{"1se"} corresponds to
-#' the support spaces such that error is within 1 standard error of the CV error
-#' for \code{"min"} and \code{"elbow"} corresponds to the elbow point of the error
-#' curve (the point that maximizes the distance between each observation, i.e,
-#' the pair composed by the upper limit of the support space and the error, and
-#' the line between the first and last observations, i.e., the lowest and the
-#' highest upper limits of the support space respectively. See
-#' \code{\link[pathviewr]{find_curve_elbow}}). The default is
-#' \code{errormeasure.which = "1se"}.
+#' to be used for selecting a support space upper limit from
+#' \code{support.signal.vector}. One of \code{c("min", "1se", "elbow")} where
+#' \code{"min"} corresponds to the support spaces that produced the lowest
+#' error, \code{"1se"} corresponds to the support spaces such that error is
+#' within 1 standard error of the CV error for \code{"min"} and \code{"elbow"}
+#' corresponds to the elbow point of the error curve (the point that maximizes
+#' the distance between each observation, i.e, the pair composed by the upper
+#' limit of the support space and the error, and the line between the first and
+#' last observations, i.e., the lowest and the highest upper limits of the
+#' support space respectively. See \code{\link[pathviewr]{find_curve_elbow}}).
+#' The default is \code{errormeasure.which = "1se"}.
 #' @param support.method One of c("standardized", "ridge"). If
 #' \code{support.method = "standardized}, the default, standardized coefficients
 #' are used to define the signal support spaces. If
 #' \code{support.method = "ridge} the signal support spaces are define by the
 #' ridge trace.
-#' @param support.method.penalize.intercept Boolean value. if \code{TRUE},
-#' the default, the intercept will be penalized. To be used when
+#' @param support.method.ridge.lambda Ridge parameter. The default is
+#' \code{support.method.ridge.lambda = NULL} and a lambda logarithmic sequence
+#' will be computed based on \code{support.method.ridge.lambda.n},
+#' \code{support.method.ridge.lambda.min} and
+#' \code{support.method.ridge.lambda.max}. Supplying a lambda sequence
+#' overrides this. To be used when \code{support.method = "ridge"}.
+#' @param support.method.ridge.lambda.min Minimum value for the
+#' \code{support.method.ridge.lambda} sequence. The default is
+#' \code{support.method.ridge.lambda.min = 10^-3}. To be used when
+#' \code{support.method = "ridge"} and
+#' \code{support.method.ridge.lambda = NULL}.
+#' @param support.method.ridge.lambda.max Maximum value for the
+#' \code{support.method.ridge.lambda} sequence. The default is
+#' \code{support.method.ridge.lambda.max = 10^3}. To be used when
+#' \code{support.method = "ridge"} and
+#' \code{support.method.ridge.lambda = NULL}.
+#' @param support.method.ridge.lambda.n The number of ridge parameters values.
+#' The default is \code{support.method.ridge.lambda.n = 100}. To be used when
+#'  \code{support.method = "ridge"} and
+#'  \code{support.method.ridge.lambda = NULL}.
+#' @param support.method.ridge.standardize Boolean value. If \code{TRUE}, the
+#' default, then: i) centering is done by subtracting the column means of x and
+#' y from their corresponding columns; ii) scaling is done by dividing the
+#' (centered) columns of x and y by their standard deviations. To be used when
 #' \code{support.method = "ridge"}.
+#' @param support.method.ridge.penalize.intercept Boolean value. if \code{TRUE},
+#' the default, the intercept will be penalized. To be used when
+#' \code{support.method = "ridge"} and
+#' \code{support.method.ridge.standardize = FALSE}.
+#' @param support.method.ridge.symm Boolean value. If \code{TRUE}, the default,
+#' signal supports will be symmetrical and the upper limit will be the maximum
+#'  absolute values of the estimated ridge coefficients for
+#'  \code{support.method.ridge.lambda}. If \code{FALSE}, the lower and upper
+#'  limits will be, respectively, the minimum and maximum values of the
+#'  estimated ridge coefficients.
+#' @param support.method.ridge.maxresid Boolean value. if \code{TRUE}, the
+#' default, noise supports will symmetrical and the upper limit will be the
+#' maximum absolute value of the residuals of ridge estimation for
+#'  \code{support.method.ridge.lambda}. If \code{FALSE} limits are computed
+#'  using the empirical three-sigma rule (Pukelsheim (1994)).
 #' @param support.signal \code{NULL} or fixed positive upper limit (L) for the
 #' support spaces (-L,L) on standardized data (when
 #' \code{support.method = "standardized"}); \code{NULL} or fixed positive factor
@@ -70,44 +108,44 @@
 #' @param support.signal.vector NULL or a vector of positive values when
 #' \code{support.signal = NULL}. If \code{support.signal.vector = NULL},
 #' the default, a vector
-#' \code{c(support.signal.vector.min,...,support.signal.vector.max)} of dimension
-#'  \code{support.signal.vector.n} and logarithmically equally spaced will be
-#' generated. Each value represents the upper limits for the standardized support
-#'  spaces, when \code{support.method = "standardized"} or the factor to be
-#'  multiplied by the maximum absolute value of the ridge trace for each
-#'  coefficient, when \code{support.method = "ridge"}.
+#' \code{c(support.signal.vector.min,...,support.signal.vector.max)} of
+#' dimension \code{support.signal.vector.n} and logarithmically equally spaced
+#' will be generated. Each value represents the upper limits for the
+#' standardized support spaces, when \code{support.method = "standardized"} or
+#' the factor to be multiplied by the maximum absolute value of the ridge trace
+#' for each coefficient, when \code{support.method = "ridge"}.
 #' @param support.signal.vector.min A positive value for the lowest limit of the
 #' \code{support.signal.vector} when \code{support.signal = NULL} and
 #' \code{support.signal.vector = NULL}. The default is
 #' \code{support.signal.vector.min = 0.3}.
-#' @param support.signal.vector.max A positive value for the highest limit of the
-#' \code{support.signal.vector} when \code{support.signal = NULL} and
+#' @param support.signal.vector.max A positive value for the highest limit of
+#' the \code{support.signal.vector} when \code{support.signal = NULL} and
 #' \code{support.signal.vector = NULL}. The default is
 #' \code{support.signal.vector.max = 20}.
 #' @param support.signal.vector.n A positive integer for the number of support
 #' spaces to be used when \code{support.signal = NULL} and
 #' \code{support.signal.vector = NULL}. The default is
 #' \code{support.signal.vector.n = 20}.
-#' @param support.signal.points A vector of positive integers defining the number
-#'  of points for the signal support to be tested .The default is
+#' @param support.signal.points A vector of positive integers defining the
+#' number of points for the signal support to be tested .The default is
 #' \code{support.signal.points = c(3, 5, 7, 9)}.
-#' @param support.noise An interval, preferably centered around zero, given in the form
-#' \code{c(LL,UL)}. If \code{support.noise = NULL}, the default, then a vector
-#' \code{c(-L,L)} is computed using the empirical three-sigma rule
+#' @param support.noise An interval, preferably centered around zero, given in
+#' the form \code{c(LL,UL)}. If \code{support.noise = NULL}, the default, then a
+#'  vector \code{c(-L,L)} is computed using the empirical three-sigma rule
 #' Pukelsheim (1994).
 #' @param support.noise.points A vector of positive integers defining the number
 #'  of points for the noise support to be tested .The default is
 #' \code{support.noise.points = c(3, 5, 7, 9)}.
 #' @param weight a vector of values between zero and one representing the
 #' prediction-precision loss trade-off. The default is
-#' \code{weight = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)}.
+#' \code{weight = c(0.1, 0.3, 0.5, 0.7, 0.9)}.
 #' @param twosteps.n Number of GCE reestimations using a previously estimated
 #' vector of signal probabilities.
 #' @param method  Use \code{"primal.solnl"} (GCE using Sequential Quadratic
 #' Programming (SQP) method; see \code{\link[NlcOptim]{solnl}}) or
 #' \code{"primal.solnp"} (GCE using the augmented Lagrange multiplier method
 #' with an SQP interior algorithm; see \code{\link[Rsolnp]{solnp}}) for primal
-#' form of the optimization problem and \code{"dual"} (GME), \code{"dual.CG"}
+#' form of the optimization problem and \code{"dual.CG"}
 #' (GCE using a conjugate gradients method; see \code{\link[stats]{optim}}),
 #' \code{"dual.BFGS"} (GCE using Broyden-Fletcher-Goldfarb-Shanno quasi-Newton
 #' method; see \code{\link[stats]{optim}}), \code{"dual.L-BFGS-B"} (GCE using a
@@ -140,8 +178,8 @@
 #' is \code{boot.B = 0}.
 #' @param boot.method Method to be use for bootstrapping. One of
 #' \code{c("residuals", "cases", "wild")} which corresponds to resampling on
-#' residuals, on individual cases or on residuals multiplied by a N(0,1) variable,
-#' respectively. The default is \code{boot.method = "residuals"}.
+#' residuals, on individual cases or on residuals multiplied by a N(0,1)
+#' variable, respectively. The default is \code{boot.method = "residuals"}.
 #' @param seed A single value, interpreted as an integer, for reproducibility
 #' or \code{NULL} for randomness. The default is \code{seed = 230676}.
 #' @param OLS Boolean value. if \code{TRUE}, the default, OLS estimation is
@@ -158,10 +196,11 @@
 #'  \code{weight} can be defined as vectors.
 #'
 #' @return
-#' \code{cv.lmgce} returns an object of \code{\link[base]{class}} \code{cv.lmgce}.
+#' \code{cv.lmgce} returns an object of \code{\link[base]{class}}
+#' \code{cv.lmgce}.
 #'
-#'  An object of \code{\link[base]{class}} \code{cv.lmgce} is a list containing at
-#'  least the following components:
+#'  An object of \code{\link[base]{class}} \code{cv.lmgce} is a list containing
+#'  at least the following components:
 #'
 #' \item{results}{a \eqn{C \times 8} \code{data.frame}, where C is the number of
 #' combinations of the arguments \code{support.signal.points},
@@ -198,22 +237,13 @@
 #' Foundations and Trends® in Econometrics, 2(1–2), 1–145.
 #' \doi{10.1561/0800000004}\cr
 #' Golan, A. (2017)
-#' \emph{Foundations of Info-Metrics: Modeling, Inference, and Imperfect Information (Vol. 1).}
-#' Oxford University Press.
+#' \emph{Foundations of Info-Metrics: Modeling, Inference, and Imperfect
+#' Information (Vol. 1).} Oxford University Press.
 #' \doi{10.1093/oso/9780199349524.001.0001}\cr
 #' Pukelsheim, F. (1994)
 #' \emph{The Three Sigma Rule.}
 #' The American Statistician, 48(2), 88–91.
 #' \doi{10.2307/2684253}
-#'
-#' @examples
-#' \donttest{
-#' res.cv.lmgce <-
-#'   cv.lmgce(y ~ .,
-#'            data = dataGCE)
-#'
-#' res.cv.lmgce
-#' }
 #'
 #' @export
 
@@ -228,7 +258,8 @@ cv.lmgce <- function(formula,
                      y = FALSE,
                      cv = TRUE,
                      cv.nfolds = 5,
-                     errormeasure = c("RMSE", "MSE", "MAE", "MAPE", "sMAPE", "MASE"),
+                     errormeasure = c("RMSE", "MSE", "MAE",
+                                      "MAPE", "sMAPE", "MASE"),
                      errormeasure.which =
                        {
                          if (isTRUE(cv))
@@ -237,7 +268,14 @@ cv.lmgce <- function(formula,
                            c("min", "elbow")
                        },
                      support.method = c("standardized", "ridge"),
-                     support.method.penalize.intercept = TRUE,
+                     support.method.ridge.lambda = NULL,
+                     support.method.ridge.lambda.min = 10^-3,
+                     support.method.ridge.lambda.max = 10^3,
+                     support.method.ridge.lambda.n = 100,
+                     support.method.ridge.standardize = TRUE,
+                     support.method.ridge.penalize.intercept = TRUE,
+                     support.method.ridge.symm = TRUE,
+                     support.method.ridge.maxresid = TRUE,
                      support.signal = NULL,
                      support.signal.vector = NULL,
                      support.signal.vector.min = 0.3,
@@ -246,12 +284,11 @@ cv.lmgce <- function(formula,
                      support.signal.points = c(3, 5, 7, 9),
                      support.noise = NULL,
                      support.noise.points = c(3, 5, 7, 9),
-                     weight = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+                     weight = c(0.1, 0.3, 0.5, 0.7, 0.9),
                      twosteps.n = 1,
                      method = c(
-                       "dual.lbfgsb3c",
                        "dual.BFGS",
-                       "dual",
+                       "dual.lbfgsb3c",
                        "primal.solnl",
                        "primal.solnp",
                        "dual.CG",
@@ -285,7 +322,8 @@ cv.lmgce <- function(formula,
   ret.y <- y
   cl <- match.call()
   mf <- match.call(expand.dots = FALSE)
-  m <- match(c("formula", "data", "subset", "na.action", "offset"), names(mf), 0L)
+  m <- match(c("formula", "data", "subset", "na.action", "offset"),
+             names(mf), 0L)
   mf <- mf[c(1L, m)]
   mf$drop.unused.levels <- TRUE
   mf[[1L]] <- quote(stats::model.frame)
@@ -300,8 +338,10 @@ cv.lmgce <- function(formula,
   offset <- as.vector(model.offset(mf))
   if(!is.null(offset)) {
     if(length(offset) != NROW(y))
-      stop(gettextf("number of offsets is %d, should equal %d (number of observations)",
-                    length(offset), NROW(y)), domain = NA)
+      stop(
+        gettextf(
+          "number of offsets is %d, should equal %d (number of observations)",
+          length(offset), NROW(y)), domain = NA)
   }
 
   X <- model.matrix(mt, mf, contrasts)
@@ -319,13 +359,15 @@ cv.lmgce <- function(formula,
   if (is.null(support.signal) || length((support.signal) == 1)){
     if (any(c("(Intercept)", "X.Intercept.") %in% colnames(X))) {
       if (any(as.numeric(apply(cbind(X[, -1], y), 2, sd)) == 0)) {
-        stop("standardization not possible because some predictors are constants.",
-             call. = FALSE)
+        stop(
+          "standardization not possible because some predictors are constants.",
+          call. = FALSE)
       }
     } else {
       if (any(as.numeric(apply(cbind(X, y), 2, sd)) == 0)) {
-        stop("standardization not possible because some predictors are constants.",
-             call. = FALSE)
+        stop(
+          "standardization not possible because some predictors are constants.",
+          call. = FALSE)
       }
     }
   }
@@ -337,18 +379,33 @@ cv.lmgce <- function(formula,
   if (NROW(y) != n)
     stop("incompatible dimensions")
 
-  max.abs.coef <- NULL
+  max.coef <- NULL
+  min.coef <- NULL
+  max.abs.residual <- NULL
   if (support.method == "ridge") {
-    max.abs.coef <-
+    res.ridgetrace <-
       ridgetrace.Xy(
         X,
         y,
-        lambda = NULL,
-        lambda.min = 0.001,
-        lambda.max = 1,
-        lambda.n = 1000,
-        penalize.intercept = support.method.penalize.intercept,
-        cv = FALSE)$max.abs.coef
+        lambda = support.method.ridge.lambda,
+        lambda.min = support.method.ridge.lambda.min,
+        lambda.max = support.method.ridge.lambda.max,
+        lambda.n = support.method.ridge.lambda.n,
+        standardize = support.method.ridge.standardize,
+        penalize.intercept = support.method.ridge.penalize.intercept,
+        errormeasure = errormeasure,
+        cv = FALSE)
+
+    max.coef <- res.ridgetrace$max.coef
+    min.coef <- res.ridgetrace$min.coef
+
+    if (isTRUE(support.method.ridge.symm)) {
+      max.coef <- res.ridgetrace$max.abs.coef
+      min.coef <- NULL
+    }
+    if (isTRUE(support.method.ridge.maxresid)) {
+      max.abs.residual <- res.ridgetrace$max.abs.residual
+    }
   }
 
   res <- list(best = list(),
@@ -390,7 +447,9 @@ cv.lmgce <- function(formula,
           cv.repeats,
           errormeasure,
           errormeasure.which,
-          max.abs.coef,
+          min.coef,
+          max.coef,
+          max.abs.residual,
           support.signal,
           support.signal.vector,
           support.signal.vector.min,
@@ -423,7 +482,9 @@ cv.lmgce <- function(formula,
             cv.repeats,
             errormeasure,
             errormeasure.which,
-            max.abs.coef,
+            min.coef,
+            max.coef,
+            max.abs.residual,
             {if (ts == 1)
               res.aux$support.matrix
               else
@@ -437,7 +498,10 @@ cv.lmgce <- function(formula,
               else
                 res.aux$results$twosteps[[ts - 1]]$p},
             support.noise,
-            support.noise.points = parameter_grid[i, 2],
+            {if (ts == 1)
+              res.aux$w
+              else
+                res.aux$results$twosteps[[ts - 1]]$w}, #parameter_grid[i, 2],
             weight = parameter_grid[i, 3],
             method,
             caseGLM,
@@ -447,7 +511,7 @@ cv.lmgce <- function(formula,
       }
 
       names(res.aux$results$twosteps) <-
-        sprintf(paste0("ts_%0",floor(log10(twosteps.n)) + 2,"d"), 1:twosteps.n)
+        sprintf(paste0("ts_%0",floor(log10(twosteps.n)) + 1,"d"), 1:twosteps.n)
 
 
       tochange <- c(
@@ -520,6 +584,9 @@ cv.lmgce <- function(formula,
         X = X,
         offset = offset,
         errormeasure = errormeasure,
+        min.coef,
+        max.coef,
+        max.abs.residual,
         support.signal = res$best$support.matrix,
         support.signal.points = res$best$p0,
         support.noise = support.noise,
@@ -571,7 +638,8 @@ cv.lmgce <- function(formula,
 
           res.OLS.cv <-
             lm(as.formula(formula),
-               data[row.names(data) %in% row.names(X), ][change_order, ][auxfolds != cv.n, ]
+               data[row.names(data) %in% row.names(X),
+                    ][change_order, ][auxfolds != cv.n, ]
                # , subset,
                # na.action,
                # offset,
@@ -580,10 +648,12 @@ cv.lmgce <- function(formula,
 
           coef.OLS[, (r - 1) * cv.nfolds + cv.n] <- coef(res.OLS.cv)
           error.OLS[(r - 1) * cv.nfolds + cv.n] <-
-            accmeasure(predict(res.OLS.cv,
-                               data[row.names(data) %in% row.names(X), ][change_order, ][auxfolds == cv.n, ]),
-                       y[change_order][auxfolds == cv.n],
-                       errormeasure)
+            accmeasure(
+              predict(res.OLS.cv,
+                      data[row.names(data) %in% row.names(X),
+                           ][change_order, ][auxfolds == cv.n, ]),
+              y[change_order][auxfolds == cv.n],
+              errormeasure)
         }
       }
     } else {
@@ -602,7 +672,8 @@ cv.lmgce <- function(formula,
   res$best$boot.method <- boot.method
   res$best$caseGLM <- caseGLM
   res$best$error <- errormeasure
-  res$best$error.which <- {if (is.null(support.signal)) errormeasure.which else NULL}
+  res$best$error.which <-
+    {if (is.null(support.signal)) errormeasure.which else NULL}
   res$best$df.residual <- nrow(X) - ncol(X)
   res$best$offset <- offset
   res$best$na.action <- attr(mf, "na.action")

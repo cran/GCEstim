@@ -13,9 +13,10 @@ ridgetrace(
   offset,
   contrasts = NULL,
   lambda = NULL,
-  lambda.min = 0.001,
-  lambda.max = 1,
+  lambda.min = 10^-3,
+  lambda.max = 10^3,
   lambda.n = 100,
+  standardize = TRUE,
   penalize.intercept = TRUE,
   errormeasure = c("RMSE", "MSE", "MAE", "MAPE", "sMAPE", "MASE"),
   cv = TRUE,
@@ -52,23 +53,32 @@ See \code{\link[stats]{model.offset}}.}
 \item{contrasts}{An optional list. See the \code{contrasts.arg} of
 \code{\link[stats]{model.matrix.default}}.}
 
-\item{lambda}{The default is \code{lambda = NULL} and a lambda sequence will
-be computed based on \code{lambda.n}, \code{lambda.min} and \code{lambda.max}.
- Supplying a lambda sequence overrides this.}
+\item{lambda}{Ridge parameter. The default is \code{lambda = NULL} and a
+lambda logarithmic sequence will be computed based on
+ \code{lambda.n}, \code{lambda.min} and \code{lambda.max}. Supplying a lambda
+ sequence overrides this.}
 
-\item{lambda.min}{Minimum value for the \code{lambda} sequence.}
+\item{lambda.min}{Minimum value for the \code{lambda} sequence. The default
+id \code{lambda.min = 10^-3}. To be used when \code{lambda = NULL}.}
 
-\item{lambda.max}{Maximum value for the \code{lambda} sequence.}
+\item{lambda.max}{Maximum value for the \code{lambda} sequence. The default
+id \code{lambda.max = 10^3}. To be used when \code{lambda = NULL}.}
 
 \item{lambda.n}{The number of lambda values. The default is
-\code{lambda.n = 100}.}
+\code{lambda.n = 100}. To be used when \code{lambda = NULL}.}
 
-\item{penalize.intercept}{Boolean value. if \code{TRUE}, the default, the
-intercept will be penalized.}
+\item{standardize}{Boolean value. If \code{TRUE}, the default, then: i)
+centering is done by subtracting the column means of x and y from their
+corresponding columns; ii) scaling is done by dividing the (centered) columns
+ of x and y by their standard deviations.}
+
+\item{penalize.intercept}{Boolean value. If \code{TRUE}, the default, the
+intercept will be penalized when \code{standardize = FALSE}.}
 
 \item{errormeasure}{Loss function (error) to be used for the selection
-of the support spaces. One of c("RMSE","MSE", "MAE", "MAPE", "sMAPE", "MASE").
-The default is \code{errormeasure = "RMSE"}.}
+of the support spaces. One of
+c("RMSE","MSE", "MAE", "MAPE", "sMAPE", "MASE"). The default is
+\code{errormeasure = "RMSE"}.}
 
 \item{cv}{Boolean value. If \code{TRUE} the error, \code{errormeasure},
 will be computed using cross-validation. If \code{FALSE} the error will be
@@ -81,14 +91,21 @@ computed in sample. The default is \code{cv = TRUE}.}
 or \code{NULL} for randomness. The default is \code{seed = 230676}.}
 }
 \value{
-An object of \code{\link[base]{class}} \code{ridgetrace} is a list containing
- at least the following components:
+An object of \code{\link[base]{class}} \code{ridgetrace} is a list
+ containing at least the following components:
 
 \item{lambda}{the lambda sequence used}
+\item{min.coef}{a named vector of coefficients (minimum
+coefficients)}
+\item{max.coef}{a named vector of coefficients (maximum
+coefficients)}
 \item{max.abs.coef}{a named vector of coefficients (maximum absolute
 coefficients)}
 \item{max.abs.residual}{the maximum absolute residual}
 \item{coef.lambda}{a data.frame with the coefficients for each lambda tested}
+\item{coef.lambda.cv}{a list of length \code{cv.nfolds} containing
+data.frames with the coefficients for each lambda tested in each
+cross-validation fold}
 \item{error.lambda}{a vector with the in sample error}
 \item{error.lambda.cv}{a data.frame with cross-validation errors}
 \item{call}{the matched call}
@@ -100,8 +117,8 @@ formula
 \examples{
 res.ridgetrace <-
   ridgetrace(
-    formula = y ~ X001 + X002 + X003 + X004 + X005,
-    data = dataGCE)
+    formula = y ~ X001 + X002 + X003 + X004,
+    data = dataThesis)
 
 res.ridgetrace
 
